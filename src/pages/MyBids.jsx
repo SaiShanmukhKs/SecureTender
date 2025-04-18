@@ -1,15 +1,32 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BidderContext } from '../contexts/BidderContext';
 
 function MyBids() {
-    const { myBids } = useContext(BidderContext);
+    const { myBids, fetchMyBids, isLoading, error } = useContext(BidderContext);
     const [filter, setFilter] = useState("all");
+    const [filteredBids, setFilteredBids] = useState([]);
 
-    // Filter bids based on status
-    const filteredBids = myBids.filter(bid => {
-        return filter === "all" || bid.status.toLowerCase() === filter.toLowerCase();
-    });
+    // Fetch bids when component mounts
+    useEffect(() => {
+        fetchMyBids();
+    }, [fetchMyBids]);
+
+    // Apply filter when either filter or myBids changes
+    useEffect(() => {
+        const filtered = myBids.filter(bid => {
+            return filter === "all" || bid.status.toLowerCase() === filter.toLowerCase();
+        });
+        setFilteredBids(filtered);
+    }, [filter, myBids]);
+
+    if (isLoading && myBids.length === 0) {
+        return <div className="loading">Loading your bids...</div>;
+    }
+
+    if (error && myBids.length === 0) {
+        return <div className="error-message">Error loading bids: {error}</div>;
+    }
 
     return (
         <div className="my-bids">
@@ -48,6 +65,10 @@ function MyBids() {
                 </button>
             </div>
 
+            {isLoading && myBids.length > 0 && (
+                <div className="loading-overlay">Refreshing bids...</div>
+            )}
+
             {filteredBids.length > 0 ? (
                 <div className="bid-list">
                     {filteredBids.map(bid => (
@@ -84,6 +105,16 @@ function MyBids() {
             ) : (
                 <p className="no-results">No bids found with the selected filter.</p>
             )}
+
+            <div className="refresh-section">
+                <button
+                    onClick={() => fetchMyBids()}
+                    className="btn btn-secondary"
+                    disabled={isLoading}
+                >
+                    {isLoading ? 'Refreshing...' : 'Refresh Bids'}
+                </button>
+            </div>
         </div>
     );
 }

@@ -1,15 +1,53 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { BidderContext } from '../contexts/BidderContext';
 
 function TenderDetail() {
-    const { tenders, myBids } = useContext(BidderContext);
+    const { getTenderById, fetchMyBids, myBids, isLoading, error } = useContext(BidderContext);
     const { id } = useParams();
     const tenderId = parseInt(id);
     const navigate = useNavigate();
 
-    const tender = tenders.find(t => t.id === tenderId);
-    const myBid = myBids.find(b => b.tenderId === tenderId);
+    const [tender, setTender] = useState(null);
+    const [localLoading, setLocalLoading] = useState(true);
+    const [localError, setLocalError] = useState(null);
+    const [myBid, setMyBid] = useState(null);
+
+    useEffect(() => {
+        const loadData = async () => {
+            setLocalLoading(true);
+            try {
+                // Fetch the specific tender by ID
+                const tenderData = await getTenderById(tenderId);
+                setTender(tenderData);
+
+                // Fetch user's bids to find if there's one for this tender
+                await fetchMyBids();
+            } catch (err) {
+                setLocalError(err.message || 'Failed to load tender details');
+            } finally {
+                setLocalLoading(false);
+            }
+        };
+
+        loadData();
+    }, [tenderId, getTenderById, fetchMyBids]);
+
+    // Find the bid for this tender from the myBids array
+    useEffect(() => {
+        if (myBids && myBids.length > 0) {
+            const bid = myBids.find(b => b.tenderId === tenderId);
+            setMyBid(bid);
+        }
+    }, [myBids, tenderId]);
+
+    if (localLoading || isLoading) {
+        return <div>Loading tender details...</div>;
+    }
+
+    if (localError || error) {
+        return <div>Error: {localError || error}</div>;
+    }
 
     if (!tender) {
         return <div>Tender not found</div>;
@@ -51,7 +89,7 @@ function TenderDetail() {
             <div className="detail-section">
                 <h3>Documents</h3>
                 <ul className="document-list">
-                    {tender.documents.map((doc, index) => (
+                    {tender.documents && tender.documents.map((doc, index) => (
                         <li key={index}>
                             <span className="document-icon">📄</span>
                             <span className="document-name">{doc}</span>

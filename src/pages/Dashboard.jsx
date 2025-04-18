@@ -1,18 +1,68 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BidderContext } from '../contexts/BidderContext';
 
 function Dashboard() {
-    const { tenders, myBids, profile } = useContext(BidderContext);
+    const { tenders, myBids, profile, fetchTenders, fetchMyBids, fetchProfile, isLoading, error } = useContext(BidderContext);
+    const [dashboardStats, setDashboardStats] = useState({
+        openTenders: 0,
+        submittedBids: 0,
+        awardedBids: 0
+    });
+    const [recommendedTenders, setRecommendedTenders] = useState([]);
+    const [isInitialized, setIsInitialized] = useState(false);
 
-    const openTenders = tenders.filter(tender => tender.status === "Open").length;
-    const submittedBids = myBids.filter(bid => bid.status === "Submitted").length;
-    const awardedBids = myBids.filter(bid => bid.status === "Awarded").length;
+    // Fetch all necessary data when component mounts
+    useEffect(() => {
+        const loadDashboardData = async () => {
+            try {
+                await Promise.all([
+                    fetchTenders(),
+                    fetchMyBids(),
+                    fetchProfile()
+                ]);
+                setIsInitialized(true);
+            } catch (err) {
+                console.error("Error loading dashboard data:", err);
+            }
+        };
 
-    // Filter tenders by profile categories (matching)
-    const recommendedTenders = tenders.filter(tender =>
-        tender.status === "Open" && !myBids.some(bid => bid.tenderId === tender.id)
-    ).slice(0, 3);
+        loadDashboardData();
+    }, [fetchTenders, fetchMyBids, fetchProfile]);
+
+    // Calculate dashboard statistics when data changes
+    useEffect(() => {
+        if (isInitialized) {
+            const openTendersCount = tenders.filter(tender => tender.status === "Open").length;
+            const submittedBidsCount = myBids.filter(bid => bid.status === "Submitted").length;
+            const awardedBidsCount = myBids.filter(bid => bid.status === "Awarded").length;
+
+            // Filter tenders by profile categories (matching)
+            const recommendedList = tenders.filter(tender =>
+                tender.status === "Open" && !myBids.some(bid => bid.tenderId === tender.id)
+            ).slice(0, 3);
+
+            setDashboardStats({
+                openTenders: openTendersCount,
+                submittedBids: submittedBidsCount,
+                awardedBids: awardedBidsCount
+            });
+
+            setRecommendedTenders(recommendedList);
+        }
+    }, [tenders, myBids, profile, isInitialized]);
+
+    if (isLoading && !isInitialized) {
+        return <div className="loading">Loading dashboard...</div>;
+    }
+
+    if (error && !isInitialized) {
+        return <div className="error-message">Error loading dashboard: {error}</div>;
+    }
+
+    if (!profile) {
+        return <div className="error-message">User profile not found</div>;
+    }
 
     return (
         <div className="dashboard">
@@ -22,17 +72,17 @@ function Dashboard() {
             <div className="dashboard-stats">
                 <div className="stat-card">
                     <h3>Open Tenders</h3>
-                    <p className="stat-value">{openTenders}</p>
+                    <p className="stat-value">{dashboardStats.openTenders}</p>
                     <Link to="/tenders" className="stat-link">Browse All</Link>
                 </div>
                 <div className="stat-card">
                     <h3>My Active Bids</h3>
-                    <p className="stat-value">{submittedBids}</p>
+                    <p className="stat-value">{dashboardStats.submittedBids}</p>
                     <Link to="/my-bids" className="stat-link">View Details</Link>
                 </div>
                 <div className="stat-card">
                     <h3>Awarded Contracts</h3>
-                    <p className="stat-value">{awardedBids}</p>
+                    <p className="stat-value">{dashboardStats.awardedBids}</p>
                     <Link to="/my-bids" className="stat-link">View All</Link>
                 </div>
             </div>
@@ -61,26 +111,43 @@ function Dashboard() {
 
             <div className="recent-activity">
                 <h2>Recent Bid Activity</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tender</th>
-                            <th>Bid Amount</th>
-                            <th>Submission Date</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {myBids.slice(0, 5).map(bid => (
-                            <tr key={bid.id}>
-                                <td>{bid.tenderTitle}</td>
-                                <td>${bid.bidAmount.toLocaleString()}</td>
-                                <td>{bid.submissionDate}</td>
-                                <td><span className={`status ${bid.status.toLowerCase()}`}>{bid.status}</span></td>
+                {myBids.length > 0 ? (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tender</th>
+                                <th>Bid Amount</th>
+                                <th>Submission Date</th>
+                                <th>Status</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {myBids.slice(0, 5).map(bid => (
+                                <tr key={bid.id}>
+                                    <td>{bid.tenderTitle}</td>
+                                    <td>${bid.bidAmount.toLocaleString()}</td>
+                                    <td>{bid.submissionDate}</td>
+                                    <td><span className={`status ${bid.status.toLowerCase()}`}>{bid.status}</span></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p>No bid activity to display.</p>
+                )}
+            </div>
+
+            <div className="refresh-section">
+                <button
+                    onClick={() => {
+                        fetchTenders();
+                        fetchMyBids();
+                    }}
+                    className="btn btn-secondary"
+                    disabled={isLoading}
+                >
+                    {isLoading ? 'Refreshing...' : 'Refresh Data'}
+                </button>
             </div>
         </div>
     );

@@ -1,129 +1,227 @@
-import React, { useState, createContext } from 'react';
-
-// Mock data for initial development
-const initialTenders = [
-    {
-        id: 1,
-        title: "Office Supplies Procurement",
-        description: "Supply of stationery and office consumables for Q1 2025",
-        deadline: "2025-03-15",
-        status: "Open",
-        createdBy: "Ministry of Education",
-        estimatedBudget: "10,000 - 15,000",
-        category: "Supplies",
-        documents: ["tender_specs.pdf", "terms_conditions.pdf"]
-    },
-    {
-        id: 2,
-        title: "IT Hardware Maintenance",
-        description: "Annual maintenance contract for server infrastructure",
-        deadline: "2025-03-10",
-        status: "Open",
-        createdBy: "Department of Health",
-        estimatedBudget: "40,000 - 50,000",
-        category: "Services",
-        documents: ["maintenance_requirements.pdf", "sla_template.pdf"]
-    },
-    {
-        id: 3,
-        title: "Cafeteria Services",
-        description: "Providing cafeteria services for 100 employees",
-        deadline: "2025-02-28",
-        status: "Closed",
-        createdBy: "City Council",
-        estimatedBudget: "30,000 - 40,000",
-        category: "Food Services",
-        documents: ["cafeteria_requirements.pdf"]
-    }
-];
-
-// Mock user data
-const mockBidderProfile = {
-    id: 1001,
-    name: "TechSolutions Inc.",
-    email: "contact@techsolutions.example",
-    phone: "+1 (555) 123-4567",
-    address: "123 Business Ave, Tech City, TC 54321",
-    registrationNumber: "BID-2025-1001",
-    rating: 4.7,
-    categories: ["IT Services", "Hardware", "Consultancy"],
-    documents: ["company_profile.pdf", "tax_certificate.pdf", "registration.pdf"]
-};
-
-// Mock bids submitted by the current bidder
-const initialMyBids = [
-    {
-        id: 101,
-        tenderId: 1,
-        tenderTitle: "Office Supplies Procurement",
-        bidAmount: 12500,
-        submissionDate: "2025-02-25",
-        status: "Submitted", // Submitted, Shortlisted, Awarded, Rejected
-        notes: "Included 5% discount on bulk orders"
-    },
-    {
-        id: 102,
-        tenderId: 2,
-        tenderTitle: "IT Hardware Maintenance",
-        bidAmount: 45000,
-        submissionDate: "2025-02-20",
-        status: "Shortlisted",
-        notes: "24/7 support included in pricing"
-    },
-    {
-        id: 103,
-        tenderId: 3,
-        tenderTitle: "Cafeteria Services",
-        bidAmount: 35000,
-        submissionDate: "2025-02-15",
-        status: "Awarded",
-        notes: "Organic food options included"
-    }
-];
+import React, { useState, useEffect, createContext } from 'react';
 
 // Create context
 export const BidderContext = createContext();
 
+// API base URL
+const API_BASE_URL = 'http://localhost:3000';
+
 export function BidderProvider({ children }) {
-    const [tenders, setTenders] = useState(initialTenders);
-    const [myBids, setMyBids] = useState(initialMyBids);
-    const [profile, setProfile] = useState(mockBidderProfile);
+    const [tenders, setTenders] = useState([]);
+    const [myBids, setMyBids] = useState([]);
+    const [profile, setProfile] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Add a new bid
-    const submitBid = (tenderId, bidData) => {
-        const tender = tenders.find(t => t.id === tenderId);
+    // Fetch all available tenders
+    const fetchTenders = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetch(`${API_BASE_URL}/tenders`);
 
-        if (!tender) return false;
+            if (!response.ok) {
+                throw new Error(`Failed to fetch tenders: ${response.status}`);
+            }
 
-        const newBid = {
-            id: Math.floor(Math.random() * 1000) + 200,
-            tenderId: tenderId,
-            tenderTitle: tender.title,
-            bidAmount: bidData.bidAmount,
-            submissionDate: new Date().toISOString().split('T')[0],
-            status: "Submitted",
-            notes: bidData.notes
-        };
+            const data = await response.json();
+            setTenders(data);
+            return data;
+        } catch (err) {
+            setError(err.message);
+            console.error("Error fetching tenders:", err);
+            return [];
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-        setMyBids([...myBids, newBid]);
-        return true;
+    // Fetch bids made by the current user
+    const fetchMyBids = async () => {
+        try {
+            setIsLoading(true);
+            // Assuming we have authentication and can get user ID from token or context
+            const response = await fetch(`${API_BASE_URL}/bidder/bids`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch your bids: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setMyBids(data);
+            return data;
+        } catch (err) {
+            setError(err.message);
+            console.error("Error fetching bids:", err);
+            return [];
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Fetch user profile
+    const fetchProfile = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetch(`${API_BASE_URL}/bidder/profile`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch profile: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setProfile(data);
+            return data;
+        } catch (err) {
+            setError(err.message);
+            console.error("Error fetching profile:", err);
+            return null;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Submit a new bid
+    const submitBid = async (tenderId, bidData) => {
+        try {
+            setIsLoading(true);
+            const response = await fetch(`${API_BASE_URL}/bidder/bids`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({
+                    tenderId,
+                    bidAmount: bidData.bidAmount,
+                    notes: bidData.notes
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to submit bid: ${response.status}`);
+            }
+
+            const newBid = await response.json();
+            setMyBids(prevBids => [...prevBids, newBid]);
+            return true;
+        } catch (err) {
+            setError(err.message);
+            console.error("Error submitting bid:", err);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Update profile information
-    const updateProfile = (newProfileData) => {
-        setProfile({
-            ...profile,
-            ...newProfileData
-        });
+    const updateProfile = async (newProfileData) => {
+        try {
+            setIsLoading(true);
+            const response = await fetch(`${API_BASE_URL}/bidder/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify(newProfileData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to update profile: ${response.status}`);
+            }
+
+            const updatedProfile = await response.json();
+            setProfile(updatedProfile);
+            return true;
+        } catch (err) {
+            setError(err.message);
+            console.error("Error updating profile:", err);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
     };
+
+    // Get a single tender by ID
+    const getTenderById = async (id) => {
+        try {
+            setIsLoading(true);
+            const response = await fetch(`${API_BASE_URL}/tenders/${id}`);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch tender: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (err) {
+            setError(err.message);
+            console.error(`Error fetching tender ${id}:`, err);
+            return null;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Search tenders by parameters
+    const searchTenders = async (searchParams) => {
+        try {
+            setIsLoading(true);
+            const queryString = new URLSearchParams(searchParams).toString();
+            const response = await fetch(`${API_BASE_URL}/tenders/search?${queryString}`);
+
+            if (!response.ok) {
+                throw new Error(`Search failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (err) {
+            setError(err.message);
+            console.error("Error searching tenders:", err);
+            return [];
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Load initial data when component mounts
+    useEffect(() => {
+        const loadInitialData = async () => {
+            setIsLoading(true);
+            await Promise.all([
+                fetchTenders(),
+                fetchMyBids(),
+                fetchProfile()
+            ]);
+            setIsLoading(false);
+        };
+
+        loadInitialData();
+    }, []);
 
     return (
         <BidderContext.Provider value={{
             tenders,
             myBids,
             profile,
+            isLoading,
+            error,
+            fetchTenders,
+            fetchMyBids,
+            fetchProfile,
             submitBid,
-            updateProfile
+            updateProfile,
+            getTenderById,
+            searchTenders
         }}>
             {children}
         </BidderContext.Provider>

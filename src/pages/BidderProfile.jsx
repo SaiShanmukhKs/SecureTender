@@ -1,10 +1,23 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { BidderContext } from '../contexts/BidderContext';
 
 function BidderProfile() {
-    const { profile, updateProfile } = useContext(BidderContext);
+    const { profile, updateProfile, fetchProfile, isLoading, error } = useContext(BidderContext);
     const [editMode, setEditMode] = useState(false);
-    const [formData, setFormData] = useState({ ...profile });
+    const [formData, setFormData] = useState({});
+    const [updateStatus, setUpdateStatus] = useState({ success: false, message: '' });
+
+    // Fetch profile data when component mounts
+    useEffect(() => {
+        fetchProfile();
+    }, [fetchProfile]);
+
+    // Update form data when profile changes
+    useEffect(() => {
+        if (profile) {
+            setFormData({ ...profile });
+        }
+    }, [profile]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -14,15 +27,44 @@ function BidderProfile() {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        updateProfile(formData);
-        setEditMode(false);
+        setUpdateStatus({ success: false, message: '' });
+
+        try {
+            const result = await updateProfile(formData);
+            if (result) {
+                setUpdateStatus({ success: true, message: 'Profile updated successfully!' });
+                setEditMode(false);
+            } else {
+                setUpdateStatus({ success: false, message: 'Failed to update profile.' });
+            }
+        } catch (err) {
+            setUpdateStatus({ success: false, message: `Error: ${err.message}` });
+        }
     };
+
+    if (isLoading && !profile) {
+        return <div className="loading">Loading profile...</div>;
+    }
+
+    if (error && !profile) {
+        return <div className="error-message">Error loading profile: {error}</div>;
+    }
+
+    if (!profile) {
+        return <div className="error-message">Profile not found</div>;
+    }
 
     return (
         <div className="bidder-profile">
             <h1>My Profile</h1>
+
+            {updateStatus.message && (
+                <div className={`alert ${updateStatus.success ? 'alert-success' : 'alert-error'}`}>
+                    {updateStatus.message}
+                </div>
+            )}
 
             {!editMode ? (
                 <div className="profile-view">
@@ -94,7 +136,7 @@ function BidderProfile() {
                             type="text"
                             id="name"
                             name="name"
-                            value={formData.name}
+                            value={formData.name || ''}
                             onChange={handleChange}
                             required
                         />
@@ -106,7 +148,7 @@ function BidderProfile() {
                             type="email"
                             id="email"
                             name="email"
-                            value={formData.email}
+                            value={formData.email || ''}
                             onChange={handleChange}
                             required
                         />
@@ -118,7 +160,7 @@ function BidderProfile() {
                             type="text"
                             id="phone"
                             name="phone"
-                            value={formData.phone}
+                            value={formData.phone || ''}
                             onChange={handleChange}
                             required
                         />
@@ -129,14 +171,20 @@ function BidderProfile() {
                         <textarea
                             id="address"
                             name="address"
-                            value={formData.address}
+                            value={formData.address || ''}
                             onChange={handleChange}
                             required
                         ></textarea>
                     </div>
 
                     <div className="form-actions">
-                        <button type="submit" className="btn btn-primary">Save Changes</button>
+                        <button
+                            type="submit"
+                            className="btn btn-primary"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Saving...' : 'Save Changes'}
+                        </button>
                         <button
                             type="button"
                             onClick={() => {
@@ -144,6 +192,7 @@ function BidderProfile() {
                                 setEditMode(false);
                             }}
                             className="btn btn-secondary"
+                            disabled={isLoading}
                         >
                             Cancel
                         </button>

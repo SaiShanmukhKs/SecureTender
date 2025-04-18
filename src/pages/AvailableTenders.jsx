@@ -1,24 +1,76 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BidderContext } from '../contexts/BidderContext';
 
 function AvailableTenders() {
-    const { tenders, myBids } = useContext(BidderContext);
+    const { tenders, myBids, fetchTenders, searchTenders, isLoading, error } = useContext(BidderContext);
     const [filter, setFilter] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
+    const [filteredTenders, setFilteredTenders] = useState([]);
+    const [searching, setSearching] = useState(false);
 
-    // Filter tenders based on status and search term
-    const filteredTenders = tenders.filter(tender => {
-        const matchesFilter = filter === "all" || tender.status.toLowerCase() === filter.toLowerCase();
-        const matchesSearch = tender.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            tender.description.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesFilter && matchesSearch;
-    });
+    // Apply filters and search when dependencies change
+    useEffect(() => {
+        const applyFilters = async () => {
+            if (searchTerm.trim().length > 0) {
+                setSearching(true);
+                try {
+                    // Use the search API if there's a search term
+                    const searchParams = {
+                        query: searchTerm,
+                        status: filter !== "all" ? filter : undefined
+                    };
+                    const results = await searchTenders(searchParams);
+                    setFilteredTenders(results);
+                } catch (err) {
+                    console.error("Error searching tenders:", err);
+                } finally {
+                    setSearching(false);
+                }
+            } else {
+                // Just filter the existing tenders if no search term
+                const filtered = tenders.filter(tender => {
+                    return filter === "all" || tender.status.toLowerCase() === filter.toLowerCase();
+                });
+                setFilteredTenders(filtered);
+            }
+        };
+
+        applyFilters();
+    }, [filter, searchTerm, tenders, searchTenders]);
+
+    // Refresh data when component mounts
+    useEffect(() => {
+        fetchTenders();
+    }, [fetchTenders]);
+
+    // Delayed search to prevent too many API calls
+    useEffect(() => {
+        const delaySearch = setTimeout(() => {
+            if (searchTerm.trim().length > 0) {
+                const searchParams = {
+                    query: searchTerm,
+                    status: filter !== "all" ? filter : undefined
+                };
+                searchTenders(searchParams);
+            }
+        }, 500);
+
+        return () => clearTimeout(delaySearch);
+    }, [searchTerm, filter, searchTenders]);
 
     // Check if the user has already bid on a tender
     const hasBid = (tenderId) => {
         return myBids.some(bid => bid.tenderId === tenderId);
     };
+
+    if (isLoading && !searching) {
+        return <div className="loading">Loading tenders...</div>;
+    }
+
+    if (error && !searching) {
+        return <div className="error-message">Error loading tenders: {error}</div>;
+    }
 
     return (
         <div className="available-tenders">
@@ -32,6 +84,7 @@ function AvailableTenders() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                    {searching && <span className="searching-indicator">Searching...</span>}
                 </div>
 
                 <div className="filter-buttons">
@@ -100,6 +153,12 @@ function AvailableTenders() {
                 ) : (
                     <p className="no-results">No tenders match your criteria.</p>
                 )}
+            </div>
+
+            <div className="refresh-section">
+                <button onClick={() => fetchTenders()} className="btn btn-secondary">
+                    Refresh Tenders
+                </button>
             </div>
         </div>
     );
