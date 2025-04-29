@@ -18,11 +18,6 @@ export const ABI = [
     type: "function",
   },
   {
-    inputs: [],
-    stateMutability: "nonpayable",
-    type: "constructor",
-  },
-  {
     anonymous: false,
     inputs: [
       {
@@ -250,62 +245,6 @@ export const ABI = [
       },
     ],
     stateMutability: "payable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_bidderId",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "_rating",
-        type: "uint256",
-      },
-    ],
-    name: "rateBidder",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "_orgName",
-        type: "string",
-      },
-    ],
-    name: "registerBidder",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "_orgName",
-        type: "string",
-      },
-    ],
-    name: "registerTenderCreator",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -573,19 +512,6 @@ export const ABI = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "bidderCounter",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       {
         internalType: "uint256",
@@ -610,50 +536,6 @@ export const ABI = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    name: "bidders",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "bidderId",
-        type: "uint256",
-      },
-      {
-        internalType: "string",
-        name: "orgName",
-        type: "string",
-      },
-      {
-        internalType: "address",
-        name: "bidderAddress",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "rating",
-        type: "uint256",
-      },
-      {
-        internalType: "bool",
-        name: "isRegistered",
-        type: "bool",
-      },
-      {
-        internalType: "uint256",
-        name: "registrationDate",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [],
     name: "getActiveTenders",
     outputs: [
@@ -661,44 +543,6 @@ export const ABI = [
         internalType: "uint256[]",
         name: "",
         type: "uint256[]",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_bidderId",
-        type: "uint256",
-      },
-    ],
-    name: "getBidderBids",
-    outputs: [
-      {
-        internalType: "uint256[]",
-        name: "",
-        type: "uint256[]",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_bidderId",
-        type: "uint256",
-      },
-    ],
-    name: "getBidderRating",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
       },
     ],
     stateMutability: "view",
@@ -762,25 +606,6 @@ export const ABI = [
       },
     ],
     name: "getTenderBids",
-    outputs: [
-      {
-        internalType: "uint256[]",
-        name: "",
-        type: "uint256[]",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_tenderCreatorId",
-        type: "uint256",
-      },
-    ],
-    name: "getTenderCreatorTenders",
     outputs: [
       {
         internalType: "uint256[]",
@@ -965,58 +790,6 @@ export const ABI = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "tenderCreatorCounter",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    name: "tenderCreators",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "tenderCreatorId",
-        type: "uint256",
-      },
-      {
-        internalType: "string",
-        name: "orgName",
-        type: "string",
-      },
-      {
-        internalType: "address",
-        name: "tenderCreatorAddress",
-        type: "address",
-      },
-      {
-        internalType: "bool",
-        name: "isRegistered",
-        type: "bool",
-      },
-      {
-        internalType: "uint256",
-        name: "registrationDate",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       {
         internalType: "uint256",
@@ -1188,4 +961,4 @@ export const ABI = [
   },
 ];
 
-export const ADDRESS = "0xaf8509AB6eB94C62FfE9EE39b1Bd174F5279Dad7";
+export const ADDRESS = "0xd2cfBB143afB7d23EeaaD112aFe9BFDb4B6Ece77";

@@ -52,28 +52,9 @@ contract BlockchainTenderingSystem {
         uint bidCounter;
     }
     
-    struct Bidder {
-        uint bidderId;
-        string orgName;
-        address bidderAddress;
-        uint rating;
-        bool isRegistered;
-        uint registrationDate;
-    }
-    
-    struct TenderCreator {
-        uint tenderCreatorId;
-        string orgName;
-        address tenderCreatorAddress;
-        bool isRegistered;
-        uint registrationDate;
-    }
-    
     // Mappings
     mapping(uint => Tender) public tenders;
     mapping(uint => mapping(uint => Bid)) public tenderBids;
-    mapping(uint => Bidder) public bidders;
-    mapping(uint => TenderCreator) public tenderCreators;
     mapping(uint => Transaction) public transactions;
     mapping(address => uint) public addressToBidderId;
     mapping(address => uint) public addressToTenderCreatorId;
@@ -83,8 +64,6 @@ contract BlockchainTenderingSystem {
     
     // Counters
     uint public tenderCounter;
-    uint public bidderCounter;
-    uint public tenderCreatorCounter;
     uint public transactionCounter;
     uint public bidCounter;
     
@@ -100,85 +79,6 @@ contract BlockchainTenderingSystem {
     event PaymentReleased(uint tenderId, uint amount, uint phase);
     event BidderRated(uint bidderId, uint rating);
     
-    // Constructor
-    constructor() {
-        owner = msg.sender;
-    }
-    
-    // Modifiers
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can call this function");
-        _;
-    }
-    
-    modifier onlyTenderCreator(uint _tenderId) {
-        require(tenders[_tenderId].createdBy == msg.sender, "Only tender creator can call this function");
-        _;
-    }
-    
-    modifier onlyRegisteredBidder() {
-        require(addressToBidderId[msg.sender] != 0, "Only registered bidders can call this function");
-        _;
-    }
-    
-    modifier onlyRegisteredTenderCreator() {
-        require(addressToTenderCreatorId[msg.sender] != 0, "Only registered tender creators can call this function");
-        _;
-    }
-    
-    modifier tenderExists(uint _tenderId) {
-        require(tenders[_tenderId].tenderId == _tenderId, "Tender does not exist");
-        _;
-    }
-    
-    modifier tenderIsOpen(uint _tenderId) {
-        require(tenders[_tenderId].status == TenderStatus.Open, "Tender is not open");
-        require(block.timestamp >= tenders[_tenderId].startDate, "Tender not started yet");
-        require(block.timestamp <= tenders[_tenderId].endDate, "Tender has ended");
-        _;
-    }
-    
-    modifier bidExists(uint _tenderId, uint _bidId) {
-        require(tenderBids[_tenderId][_bidId].bidId == _bidId, "Bid does not exist");
-        _;
-    }
-    
-    // Registration Functions
-    function registerBidder(string memory _orgName) external returns (uint) {
-        require(addressToBidderId[msg.sender] == 0, "Bidder already registered");
-        
-        bidderCounter++;
-        Bidder storage newBidder = bidders[bidderCounter];
-        newBidder.bidderId = bidderCounter;
-        newBidder.orgName = _orgName;
-        newBidder.bidderAddress = msg.sender;
-        newBidder.rating = 0;
-        newBidder.isRegistered = true;
-        newBidder.registrationDate = block.timestamp;
-        
-        addressToBidderId[msg.sender] = bidderCounter;
-        
-        emit BidderRegistered(bidderCounter, msg.sender);
-        return bidderCounter;
-    }
-    
-    function registerTenderCreator(string memory _orgName) external returns (uint) {
-        require(addressToTenderCreatorId[msg.sender] == 0, "Tender creator already registered");
-        
-        tenderCreatorCounter++;
-        TenderCreator storage newTenderCreator = tenderCreators[tenderCreatorCounter];
-        newTenderCreator.tenderCreatorId = tenderCreatorCounter;
-        newTenderCreator.orgName = _orgName;
-        newTenderCreator.tenderCreatorAddress = msg.sender;
-        newTenderCreator.isRegistered = true;
-        newTenderCreator.registrationDate = block.timestamp;
-        
-        addressToTenderCreatorId[msg.sender] = tenderCreatorCounter;
-        
-        emit TenderCreatorRegistered(tenderCreatorCounter, msg.sender);
-        return tenderCreatorCounter;
-    }
-    
     // Tender Management Functions
     function createTender(
         string memory _title,
@@ -190,7 +90,6 @@ contract BlockchainTenderingSystem {
         uint _moneyDispersalPhases
     ) external returns (uint) {
         require(_startDate < _endDate, "End date must be after start date");
-        require(_startDate >= block.timestamp, "Start date must be in the future");
         
         uint tenderCreatorId = addressToTenderCreatorId[msg.sender];
         
@@ -413,41 +312,6 @@ contract BlockchainTenderingSystem {
         payable(owner).transfer(balance);
     }
     
-    // Rating System
-    function rateBidder(uint _bidderId, uint _rating) external {
-        require(_bidderId != 0 && bidders[_bidderId].isRegistered, "Bidder does not exist");
-        require(_rating >= 1 && _rating <= 5, "Rating must be between 1 and 5");
-        
-        bidderRatings[_bidderId].push(_rating);
-        
-        // Update bidder's average rating
-        calculateAverageRating(_bidderId);
-        
-        emit BidderRated(_bidderId, _rating);
-    }
-    
-    function calculateAverageRating(uint _bidderId) internal {
-        uint[] storage ratings = bidderRatings[_bidderId];
-        uint totalRatings = ratings.length;
-        
-        if(totalRatings == 0) {
-            bidders[_bidderId].rating = 0;
-            return;
-        }
-        
-        uint sum = 0;
-        for(uint i = 0; i < totalRatings; i++) {
-            sum += ratings[i];
-        }
-        
-        bidders[_bidderId].rating = sum / totalRatings;
-    }
-    
-    function getBidderRating(uint _bidderId) external view returns (uint) {
-        require(_bidderId != 0 && bidders[_bidderId].isRegistered, "Bidder does not exist");
-        return bidders[_bidderId].rating;
-    }
-    
     // Utility and Query Functions
     function getActiveTenders() external view returns (uint[] memory) {
         uint activeCount = 0;
@@ -478,15 +342,6 @@ contract BlockchainTenderingSystem {
         return activeTenderIds;
     }
     
-    function getBidderBids(uint _bidderId) external view returns (uint[] memory) {
-        require(_bidderId != 0 && bidders[_bidderId].isRegistered, "Bidder does not exist");
-        return bidderBids[_bidderId];
-    }
-    
-    function getTenderCreatorTenders(uint _tenderCreatorId) external view returns (uint[] memory) {
-        require(_tenderCreatorId != 0 && tenderCreators[_tenderCreatorId].isRegistered, "Tender creator does not exist");
-        return tenderCreatorTenders[_tenderCreatorId];
-    }
     
     function getTenderBids(uint _tenderId) external view returns (uint[] memory) {
         Tender storage tender = tenders[_tenderId];

@@ -1,37 +1,30 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import connectDB from "./config/database.js";
-import authRoutes from "./routes/auth.js";
-import tenderRoutes from "./routes/tender.js";
-import bidRoutes from "./routes/bid.js";
-import profileRoutes from "./routes/profile.js";
+
+import connectToDb from "./utils/connectToDb.js";
+import bidderRoutes from "./routes/bidderRoute.js";
+import tenderCreatorRoutes from "./routes/tenderCreatorRoute.js";
 
 dotenv.config();
 
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
-
-// Connect to MongoDB
-connectDB();
-
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/tenders", tenderRoutes);
-app.use("/api/bids", bidRoutes);
-app.use("/api/profile", profileRoutes);
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
-});
-
 const PORT = process.env.PORT || 3000;
 
+// Connect to MongoDB
+connectToDb();
+
+app.use("/api/bidder", bidderRoutes);
+app.use("/api/tender-creator", tenderCreatorRoutes);
+
+// Default Route
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
+
+// Start the server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
