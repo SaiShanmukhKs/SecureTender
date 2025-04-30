@@ -4,7 +4,7 @@ import { TenderContext } from '../context/TenderContext';
 import { useBlockchainTendering } from '../context/ContractContext';
 
 const CreateTender = () => {
-    const { addTender } = useContext(TenderContext);
+    // const { addTender } = useContext(TenderContext);
     const { createTender, toWei } = useBlockchainTendering();
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);

@@ -1,5 +1,5 @@
 import React, { createContext, useState } from 'react';
-import { initialTenders } from '../data/mockData';
+// import { initialTenders } from '../data/mockData';
 
 export const TenderContext = createContext();
 

@@ -75,146 +75,144 @@ export const BlockchainTenderingProvider = ({ children }) => {
         };
     }, []);
 
-    // Helper function to get gas price and create transaction options
-    const getTxOptions = async () => {
-        if (!web3 || !account) return { from: account };
-
-        try {
-            const gasPrice = await web3.eth.getGasPrice();
-            return {
-                from: account,
-                gasPrice: gasPrice,
-                type: '0x0' // Force legacy transaction format
-            };
-        } catch (error) {
-            console.error("Error getting gas price:", error);
-            return { from: account, type: '0x0' };
-        }
-    };
-
     // Contract functions
     const contextValue = {
         account,
 
         // Registration functions
         registerBidder: async (orgName) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.registerBidder(orgName).send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.registerBidder(orgName).send({ from: account });
         },
 
         registerTenderCreator: async (orgName) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.registerTenderCreator(orgName).send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.registerTenderCreator(orgName).send({ from: account });
         },
 
         // Tender creation and management
         createTender: async (title, rfp, startDate, endDate, tenderFee, registrationFee, phases) => {
-            const txOptions = await getTxOptions();
+            if (!contract || !account) throw new Error("Contract not initialized");
+            
+            console.log("Transaction parameters:", {
+                title, rfp, startDate, endDate, tenderFee, registrationFee, phases
+            });
+            
             return await contract.methods.createTender(
                 title, rfp, startDate, endDate, tenderFee, registrationFee, phases
-            ).send(txOptions);
+            ).send({ from: account });
         },
 
         closeTender: async (tenderId) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.closeTender(tenderId).send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.closeTender(tenderId).send({ from: account });
         },
 
         cancelTender: async (tenderId) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.cancelTender(tenderId).send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.cancelTender(tenderId).send({ from: account });
         },
 
         // Bidding functions
         placeBid: async (tenderId, bidDetails, amount, paymentAmount) => {
+            if (!contract || !account || !web3) throw new Error("Contract not initialized");
             const value = web3.utils.toWei(paymentAmount.toString(), 'ether');
-            const txOptions = await getTxOptions();
             return await contract.methods.placeBid(tenderId, bidDetails, amount).send({
-                ...txOptions,
+                from: account,
                 value: value
             });
         },
 
         approveBid: async (tenderId, bidId) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.approveBid(tenderId, bidId).send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.approveBid(tenderId, bidId).send({ from: account });
         },
 
         rejectBid: async (tenderId, bidId) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.rejectBid(tenderId, bidId).send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.rejectBid(tenderId, bidId).send({ from: account });
         },
 
         setWinner: async (tenderId, bidId) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.setWinner(tenderId, bidId).send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.setWinner(tenderId, bidId).send({ from: account });
         },
 
         // Payment functions
         initiatePayment: async (tenderId, paymentAmount) => {
+            if (!contract || !account || !web3) throw new Error("Contract not initialized");
             const value = web3.utils.toWei(paymentAmount.toString(), 'ether');
-            const txOptions = await getTxOptions();
             return await contract.methods.initiatePayment(tenderId).send({
-                ...txOptions,
+                from: account,
                 value: value
             });
         },
 
         releasePayment: async (tenderId, phase, amount) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.releasePayment(tenderId, phase, amount).send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.releasePayment(tenderId, phase, amount).send({ from: account });
         },
 
         withdrawFees: async () => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.withdrawFees().send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.withdrawFees().send({ from: account });
         },
 
         // Rating function
         rateBidder: async (bidderId, rating) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.rateBidder(bidderId, rating).send(txOptions);
+            if (!contract || !account) throw new Error("Contract not initialized");
+            return await contract.methods.rateBidder(bidderId, rating).send({ from: account });
         },
 
-        // View functions
+        // View functions - these don't need transaction options
         getActiveTenders: async () => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.getActiveTenders().call();
         },
 
         getTenderDetails: async (tenderId) => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.getTenderDetails(tenderId).call();
         },
 
         getTenderBids: async (tenderId) => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.getTenderBids(tenderId).call();
         },
 
         getBidDetails: async (tenderId, bidId) => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.getBidDetails(tenderId, bidId).call();
         },
 
         getBidderRating: async (bidderId) => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.getBidderRating(bidderId).call();
         },
 
         getBidderBids: async (bidderId) => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.getBidderBids(bidderId).call();
         },
 
         getTenderCreatorTenders: async (tenderCreatorId) => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.getTenderCreatorTenders(tenderCreatorId).call();
         },
 
         isTenderActive: async (tenderId) => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.isTenderActive(tenderId).call();
         },
 
         // User ID lookups
         getBidderId: async (address) => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.addressToBidderId(address).call();
         },
 
         getTenderCreatorId: async (address) => {
+            if (!contract) throw new Error("Contract not initialized");
             return await contract.methods.addressToTenderCreatorId(address).call();
         },
 

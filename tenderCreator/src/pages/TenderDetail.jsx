@@ -1,39 +1,41 @@
-import React, { useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { TenderContext } from '../context/TenderContext';
-import StatusBadge from '../components/StatusBadge';
 import useParams from '../hooks/useParams';
+import { useBlockchainTendering } from '../context/ContractContext';
+import StatusBadge from '../components/StatusBadge';
 
 const TenderDetail = () => {
-    const { tenders, awardTender, addMockBidders } = useContext(TenderContext);
+    const { getTenderDetails } = useBlockchainTendering();
     const navigate = useNavigate();
     const { id } = useParams();
     const tenderId = parseInt(id);
+    const [tender, setTender] = useState(null);
 
-    const tender = tenders.find(t => t.id === tenderId);
+    const getTender = async (tenderId) => {
+        const tender = await getTenderDetails(tenderId); 
+        setTender(tender);
+    };
+
+    useEffect(() => {
+        getTender(tenderId);
+    }, [tenderId]);
+
+    console.log("Tender Details:", tender);
 
     if (!tender) {
-        return <div>Tender not found</div>;
+        return <div>Loading tender details...</div>;
     }
 
-    const sortedBidders = [...tender.bidders].sort((a, b) => {
-        const scoreA = (a.rating * 10000) / a.bid;
-        const scoreB = (b.rating * 10000) / b.bid;
-        return scoreB - scoreA;
-    });
-
-    const handleAward = (bidderId) => {
-        awardTender(tenderId, bidderId);
-        navigate("/awarded-tenders");
+    // Convert status from number to readable text
+    const statusMapping = {
+        0: "Open",
+        1: "Closed",
+        2: "Awarded",
+        // add more statuses if needed
     };
 
-    const handleAddBidders = () => {
-        addMockBidders(tenderId);
-    };
-
-    const awardedBidder = tender.awardedTo
-        ? tender.bidders.find(bidder => bidder.id === tender.awardedTo)
-        : null;
+    const formattedStartDate = new Date(Number(tender.startDate) * 1000).toLocaleDateString();
+    const formattedEndDate = new Date(Number(tender.endDate) * 1000).toLocaleDateString();
 
     return (
         <div className="tender-detail">
@@ -41,71 +43,19 @@ const TenderDetail = () => {
 
             <div className="tender-info">
                 <h2>{tender.title}</h2>
-                <p><strong>Status:</strong> <StatusBadge status={tender.status} /></p>
-                <p><strong>Deadline:</strong> {tender.deadline}</p>
-                <p><strong>Description:</strong> {tender.description}</p>
-
-                {awardedBidder && (
-                    <div className="awarded-info">
-                        <h3>Awarded To</h3>
-                        <p><strong>Vendor:</strong> {awardedBidder.name}</p>
-                        <p><strong>Bid Amount:</strong> ${awardedBidder.bid.toLocaleString()}</p>
-                        <p><strong>Rating:</strong> {awardedBidder.rating.toFixed(1)}/5</p>
-                    </div>
-                )}
+                <p><strong>Status:</strong> <StatusBadge status={statusMapping[Number(tender.status)] || "Unknown"} /></p>
+                <p><strong>Start Date:</strong> {formattedStartDate}</p>
+                <p><strong>End Date:</strong> {formattedEndDate}</p>
+                <p><strong>Request for Proposal (RFP):</strong> {tender.rfp}</p>
+                <p><strong>Tender Fee:</strong> {Number(tender.tenderFee) / 1e18} ETH</p>
+                <p><strong>Registration Fee:</strong> {Number(tender.registrationFee) / 1e18} ETH</p>
+                <p><strong>Money Dispersal Phases:</strong> {Number(tender.moneyDispersalPhases)}</p>
+                <p><strong>Created By:</strong> {tender.createdBy}</p>
+                <p><strong>Bid Count:</strong> {Number(tender.bidCount)}</p>
+                <p><strong>Winner:</strong> {tender.winner !== "0x0000000000000000000000000000000000000000" ? tender.winner : "No winner yet"}</p>
             </div>
 
-            {tender.status === "Open" && (
-                <div className="bidders-section">
-                    <div className="bidders-header">
-                        <h3>Bidders</h3>
-                        {tender.bidders.length === 0 && (
-                            <button onClick={handleAddBidders} className="btn btn-secondary">
-                                Simulate Bidders (Demo)
-                            </button>
-                        )}
-                    </div>
-
-                    {tender.bidders.length > 0 ? (
-                        <div className="top-bidders">
-                            <h4>Top 3 Bidders (Sorted by Rating and Bid)</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Rank</th>
-                                        <th>Name</th>
-                                        <th>Bid Amount</th>
-                                        <th>Rating</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {sortedBidders.slice(0, 3).map((bidder, index) => (
-                                        <tr key={bidder.id}>
-                                            <td>{index + 1}</td>
-                                            <td>{bidder.name}</td>
-                                            <td>${bidder.bid.toLocaleString()}</td>
-                                            <td>{bidder.rating.toFixed(1)}/5</td>
-                                            <td>
-                                                <button
-                                                    onClick={() => handleAward(bidder.id)}
-                                                    className="btn btn-award"
-                                                >
-                                                    Award Tender
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <p>No bidders have submitted proposals yet.</p>
-                    )}
-                </div>
-            )}
-
-            <div className="back-link">
+            <div className="back-link" style={{ marginTop: '20px' }}>
                 <Link to="/all-tenders">Back to All Tenders</Link>
             </div>
         </div>
