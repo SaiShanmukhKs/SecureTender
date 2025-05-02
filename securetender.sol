@@ -7,6 +7,7 @@ contract BlockchainTendering {
     uint public txCount;
 
     enum BidStatus { Pending, Accepted, Rejected }
+    enum TenderStatus {Closed, Open, Cancelled}
 
     struct Transaction {
         uint txId;
@@ -22,7 +23,6 @@ contract BlockchainTendering {
         uint tenderId;
         address createdBy;
         string detailsFile;
-        string bidDetails;
         uint amount;
         uint issueDate;
         BidStatus status;
@@ -35,26 +35,13 @@ contract BlockchainTendering {
         uint startDate;
         uint endDate;
         uint tenderFee;
-        uint earnestFee;
-        uint[] moneyDispersalPhases;
+        uint registrationFee;
+        uint moneyDispersalPhases;
         address createdBy;
-        string tenderType;
-        string status;
+        TenderStatus tenderStatus;
         address winner;
         uint[] bidIds;
         uint[] transactionIds;
-    }
-
-    // Input structs to reduce stack depth
-    struct TenderInput {
-        string title;
-        string rfp;
-        uint startDate;
-        uint endDate;
-        uint tenderFee;
-        uint earnestFee;
-        uint[] moneyDispersalPhases;
-        string tenderType;
     }
 
     struct TransactionInput {
@@ -95,28 +82,57 @@ contract BlockchainTendering {
 
     // ============ FUNCTIONS ============
 
-    function createTender(TenderInput memory input) public {
+    function createTender(string memory title, string memory rfp, uint startDate, uint endDate, uint tenderFee, uint registrationFee, uint phases) public {
         tenderCount++;
         Tender storage t = tenders[tenderCount];
         t.tenderId = tenderCount;
-        t.title = input.title;
-        t.rfp = input.rfp;
-        t.startDate = input.startDate;
-        t.endDate = input.endDate;
-        t.tenderFee = input.tenderFee;
-        t.earnestFee = input.earnestFee;
-        t.moneyDispersalPhases = input.moneyDispersalPhases;
+        t.title = title;
+        t.rfp = rfp;
+        t.startDate = startDate;
+        t.endDate = endDate;
+        t.tenderFee = tenderFee;
+        t.registrationFee = registrationFee;
+        t.moneyDispersalPhases = phases;
         t.createdBy = msg.sender;
-        t.tenderType = input.tenderType;
-        t.status = "Open";
+        t.tenderStatus = TenderStatus.Open;
 
         tendersByCreator[msg.sender].push(tenderCount);
     }
 
+    function getActiveTenders() external view returns (Tender[] memory) {
+        uint activeCount = 0;
+        
+        // Count active tenders
+        for(uint i = 1; i <= tenderCount; i++) {
+            if(tenders[i].tenderStatus == TenderStatus.Open && 
+               block.timestamp >= tenders[i].startDate && 
+               block.timestamp <= tenders[i].endDate) {
+                activeCount++;
+            }
+        }
+        
+        // Create result array
+        Tender[] memory activeTenders = new Tender[](activeCount);
+        uint currentIndex = 0;
+        
+        // Fill result array
+        for(uint i = 1; i <= tenderCount; i++) {
+            if(tenders[i].tenderStatus == TenderStatus.Open && 
+               block.timestamp >= tenders[i].startDate && 
+               block.timestamp <= tenders[i].endDate) {
+                activeTenders[currentIndex] = tenders[i];
+                currentIndex++;
+            }
+        }
+        
+        return activeTenders;
+    }
+
+    function getTede
+
     function placeBid(
         uint _tenderId,
         string memory _detailsFile,
-        string memory _bidDetails,
         uint _amount
     ) public validTender(_tenderId) {
         bidCount++;
@@ -125,7 +141,6 @@ contract BlockchainTendering {
         b.tenderId = _tenderId;
         b.createdBy = msg.sender;
         b.detailsFile = _detailsFile;
-        b.bidDetails = _bidDetails;
         b.amount = _amount;
         b.issueDate = block.timestamp;
         b.status = BidStatus.Pending;
@@ -147,8 +162,25 @@ contract BlockchainTendering {
         validTender(_tenderId)
         onlyCreator(_tenderId)
     {
+        uint[] memory bidIds = tenders[_tenderId].bidIds;
+        bool winnerHasBid = false;
+        
+        for (uint i = 0; i < bidIds.length; i++) {
+            uint bidId = bidIds[i];
+            if (bids[bidId].createdBy == _winner) {
+                bids[bidId].status = BidStatus.Accepted;
+                winnerHasBid = true;
+            } else {
+                // Reject all other bids
+                bids[bidId].status = BidStatus.Rejected;
+            }
+        }
+        
+        // Ensure the winner has placed a bid
+        require(winnerHasBid, "Winner has not placed a bid");
+        
         tenders[_tenderId].winner = _winner;
-        tenders[_tenderId].status = "Closed";
+        tenders[_tenderId].tenderStatus = TenderStatus.Closed;
     }
 
     function logTransaction(TransactionInput memory input)
@@ -187,12 +219,13 @@ contract BlockchainTendering {
         logTransaction(input);
     }
 
-    function updateStatus(uint _tenderId, string memory _newStatus)
+    function updateStatus(uint _tenderId, uint _newStatus)
         public
         validTender(_tenderId)
         onlyCreator(_tenderId)
     {
-        tenders[_tenderId].status = _newStatus;
+        require(_newStatus <= uint(TenderStatus.Cancelled), "Invalid status");
+        tenders[_tenderId].tenderStatus = TenderStatus(_newStatus);
     }
 
     function getBidsForTender(uint _tenderId) public view validTender(_tenderId) returns (uint[] memory) {

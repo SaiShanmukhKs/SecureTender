@@ -14,29 +14,41 @@ const AllTenders = () => {
             try {
                 setLoading(true);
                 // Get all active tenders from the blockchain
-                const activeTenderIds = await blockchain.getActiveTenders();
-                console.log(activeTenderIds)
-                // Fetch detailed information for each tender
-                const tendersData = await Promise.all(
-                    activeTenderIds.map(async (tenderId) => {
-                        const tenderDetails = await blockchain.getTenderDetails(tenderId);
-                        const tenderBids = await blockchain.getTenderBids(tenderId);
-                        const isActive = await blockchain.isTenderActive(tenderId);
+                const activeTenders = await blockchain.getActiveTenders();
+                console.log(activeTenders);
 
-                        // Format the tender data
-                        return {
-                            id: tenderId,
-                            title: tenderDetails.title,
-                            deadline: new Date(Number(tenderDetails.endDate) * 1000).toLocaleDateString(),
-                            status: isActive ? "Active" : "Closed",
-                            bidders: tenderBids,
-                            tenderCreator: tenderDetails.tenderCreator,
-                            tenderFee: blockchain.fromWei(tenderDetails.tenderFee),
-                            registrationFee: blockchain.fromWei(tenderDetails.registrationFee),
-                            rawDetails: tenderDetails
-                        };
-                    })
-                );
+                // Format the tender data based on the actual return structure
+                const tendersData = activeTenders.map((tender) => {
+                    // Converting BigInt to regular numbers for display
+                    const tenderFeeInWei = typeof tender.tenderFee === 'bigint' ?
+                        tender.tenderFee.toString() : tender.tenderFee;
+
+                    const registrationFeeInWei = typeof tender.registrationFee === 'bigint' ?
+                        tender.registrationFee.toString() : tender.registrationFee;
+
+                    // Enum mapping: TenderStatus {Closed=0, Open=1, Cancelled=2}
+                    const statusMapping = {
+                        "0": "Closed",
+                        "1": "Active",
+                        "2": "Cancelled"
+                    };
+
+                    const statusKey = typeof tender.tenderStatus === 'bigint' ?
+                        tender.tenderStatus.toString() : tender.tenderStatus.toString();
+
+                    return {
+                        id: tender.tenderId.toString(),
+                        title: tender.title,
+                        deadline: new Date(Number(tender.endDate) * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                        status: statusMapping[statusKey] || "Unknown",
+                        bidders: tender.bidIds ? tender.bidIds.length : 0,
+                        tenderFee: blockchain.fromWei ? blockchain.fromWei(tenderFeeInWei) :
+                            (tenderFeeInWei / 1e18).toString(),
+                        registrationFee: blockchain.fromWei ? blockchain.fromWei(registrationFeeInWei) :
+                            (registrationFeeInWei / 1e18).toString(),
+                        createdBy: tender.createdBy
+                    };
+                });
 
                 setTenders(tendersData);
             } catch (err) {
@@ -91,7 +103,7 @@ const AllTenders = () => {
                                     <td className="py-2 px-4 border-b">
                                         <StatusBadge status={tender.status} />
                                     </td>
-                                    <td className="py-2 px-4 border-b">{tender.bidders.length}</td>
+                                    <td className="py-2 px-4 border-b">{tender.bidders}</td>
                                     <td className="py-2 px-4 border-b">{tender.tenderFee}</td>
                                     <td className="py-2 px-4 border-b">
                                         <Link

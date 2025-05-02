@@ -70,11 +70,11 @@ const CreateTender = () => {
             console.log("Transaction result:", result);
 
             // Add to local context if needed
-            addTender({
-                ...tender,
-                startDate: startTimestamp,
-                endDate: endTimestamp
-            });
+            // addTender({
+            //     ...tender,
+            //     startDate: startTimestamp,
+            //     endDate: endTimestamp
+            // });
 
             navigate("/all-tenders");
         } catch (error) {
