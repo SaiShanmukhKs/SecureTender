@@ -1,167 +1,126 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BidderContext } from '../contexts/BidderContext';
+import { useBlockchainTendering } from '../contexts/ContractContext';
+import StatusBadge from '../components/StatusBadge';
 
-function AvailableTenders() {
-    const { tenders, myBids, fetchTenders, searchTenders, isLoading, error } = useContext(BidderContext);
-    const [filter, setFilter] = useState("all");
-    const [searchTerm, setSearchTerm] = useState("");
-    const [filteredTenders, setFilteredTenders] = useState([]);
-    const [searching, setSearching] = useState(false);
+const AllTenders = () => {
+    const [tenders, setTenders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const blockchain = useBlockchainTendering();
 
-    // Apply filters and search when dependencies change
     useEffect(() => {
-        const applyFilters = async () => {
-            if (searchTerm.trim().length > 0) {
-                setSearching(true);
-                try {
-                    // Use the search API if there's a search term
-                    const searchParams = {
-                        query: searchTerm,
-                        status: filter !== "all" ? filter : undefined
+        const fetchTenders = async () => {
+            try {
+                setLoading(true);
+                // Get all active tenders from the blockchain
+                const activeTenders = await blockchain.getActiveTenders();
+                console.log(activeTenders);
+
+                // Format the tender data based on the actual return structure
+                const tendersData = activeTenders.map((tender) => {
+                    // Converting BigInt to regular numbers for display
+                    const tenderFeeInWei = typeof tender.tenderFee === 'bigint' ?
+                        tender.tenderFee.toString() : tender.tenderFee;
+
+                    const registrationFeeInWei = typeof tender.registrationFee === 'bigint' ?
+                        tender.registrationFee.toString() : tender.registrationFee;
+
+                    // Enum mapping: TenderStatus {Closed=0, Open=1, Cancelled=2}
+                    const statusMapping = {
+                        "0": "Closed",
+                        "1": "Open",
+                        "2": "Cancelled"
                     };
-                    const results = await searchTenders(searchParams);
-                    setFilteredTenders(results);
-                } catch (err) {
-                    console.error("Error searching tenders:", err);
-                } finally {
-                    setSearching(false);
-                }
-            } else {
-                // Just filter the existing tenders if no search term
-                const filtered = tenders.filter(tender => {
-                    return filter === "all" || tender.status.toLowerCase() === filter.toLowerCase();
+
+                    const statusKey = typeof tender.tenderStatus === 'bigint' ?
+                        tender.tenderStatus.toString() : tender.tenderStatus.toString();
+
+                    return {
+                        id: tender.tenderId.toString(),
+                        title: tender.title,
+                        deadline: new Date(Number(tender.endDate) * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                        status: statusMapping[statusKey] || "Unknown",
+                        bidders: tender.bidIds ? tender.bidIds.length : 0,
+                        tenderFee: blockchain.fromWei ? blockchain.fromWei(tenderFeeInWei) :
+                            (tenderFeeInWei / 1e18).toString(),
+                        registrationFee: blockchain.fromWei ? blockchain.fromWei(registrationFeeInWei) :
+                            (registrationFeeInWei / 1e18).toString(),
+                        createdBy: tender.createdBy
+                    };
                 });
-                setFilteredTenders(filtered);
+
+                setTenders(tendersData);
+            } catch (err) {
+                console.error("Error fetching tenders:", err);
+                setError("Failed to load tenders. Please check your connection and try again.");
+            } finally {
+                setLoading(false);
             }
         };
 
-        applyFilters();
-    }, [filter, searchTerm, tenders, searchTenders]);
+        if (blockchain.account) {
+            fetchTenders();
+        }
+    }, [blockchain.account]);
 
-    // Refresh data when component mounts
-    useEffect(() => {
-        fetchTenders();
-    }, [fetchTenders]);
-
-    // Delayed search to prevent too many API calls
-    useEffect(() => {
-        const delaySearch = setTimeout(() => {
-            if (searchTerm.trim().length > 0) {
-                const searchParams = {
-                    query: searchTerm,
-                    status: filter !== "all" ? filter : undefined
-                };
-                searchTenders(searchParams);
-            }
-        }, 500);
-
-        return () => clearTimeout(delaySearch);
-    }, [searchTerm, filter, searchTenders]);
-
-    // Check if the user has already bid on a tender
-    const hasBid = (tenderId) => {
-        return myBids.some(bid => bid.tenderId === tenderId);
-    };
-
-    if (isLoading && !searching) {
+    if (loading) {
         return <div className="loading">Loading tenders...</div>;
     }
 
-    if (error && !searching) {
-        return <div className="error-message">Error loading tenders: {error}</div>;
+    if (error) {
+        return <div className="error-message">{error}</div>;
     }
 
     return (
-        <div className="available-tenders">
-            <h1>Available Tenders</h1>
+        <div className="all-tenders container mx-auto py-8 px-4">
+            <h1 className="text-2xl font-bold mb-6">All Tenders</h1>
 
-            <div className="filter-container">
-                <div className="search-box">
-                    <input
-                        type="text"
-                        placeholder="Search tenders..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    {searching && <span className="searching-indicator">Searching...</span>}
+            {tenders.length === 0 ? (
+                <div className="no-tenders-message bg-gray-100 p-4 rounded text-center">
+                    No active tenders found.
                 </div>
-
-                <div className="filter-buttons">
-                    <button
-                        className={filter === "all" ? "active" : ""}
-                        onClick={() => setFilter("all")}
-                    >
-                        All
-                    </button>
-                    <button
-                        className={filter === "open" ? "active" : ""}
-                        onClick={() => setFilter("open")}
-                    >
-                        Open
-                    </button>
-                    <button
-                        className={filter === "closed" ? "active" : ""}
-                        onClick={() => setFilter("closed")}
-                    >
-                        Closed
-                    </button>
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200">
+                        <thead className="bg-gray-100">
+                            <tr>
+                                <th className="py-3 px-4 border-b text-left">ID</th>
+                                <th className="py-3 px-4 border-b text-left">Title</th>
+                                <th className="py-3 px-4 border-b text-left">Deadline</th>
+                                <th className="py-3 px-4 border-b text-left">Status</th>
+                                <th className="py-3 px-4 border-b text-left">Bids</th>
+                                <th className="py-3 px-4 border-b text-left">Fee (ETH)</th>
+                                <th className="py-3 px-4 border-b text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {tenders.map(tender => (
+                                <tr key={tender.id} className="hover:bg-gray-50">
+                                    <td className="py-2 px-4 border-b">{tender.id}</td>
+                                    <td className="py-2 px-4 border-b">{tender.title}</td>
+                                    <td className="py-2 px-4 border-b">{tender.deadline}</td>
+                                    <td className="py-2 px-4 border-b">
+                                        <StatusBadge status={tender.status} />
+                                    </td>
+                                    <td className="py-2 px-4 border-b">{tender.bidders}</td>
+                                    <td className="py-2 px-4 border-b">{tender.tenderFee}</td>
+                                    <td className="py-2 px-4 border-b">
+                                        <Link
+                                            to={`/tender/${tender.id}`}
+                                            className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-sm"
+                                        >
+                                            View
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-
-            <div className="tender-list">
-                {filteredTenders.length > 0 ? (
-                    filteredTenders.map(tender => (
-                        <div key={tender.id} className="tender-item">
-                            <div className="tender-header">
-                                <h3>{tender.title}</h3>
-                                <span className={`status ${tender.status.toLowerCase()}`}>{tender.status}</span>
-                            </div>
-
-                            <p className="tender-description">{tender.description}</p>
-
-                            <div className="tender-meta">
-                                <div className="meta-item">
-                                    <span className="meta-label">Created by:</span>
-                                    <span className="meta-value">{tender.createdBy}</span>
-                                </div>
-                                <div className="meta-item">
-                                    <span className="meta-label">Deadline:</span>
-                                    <span className="meta-value">{tender.deadline}</span>
-                                </div>
-                                <div className="meta-item">
-                                    <span className="meta-label">Est. Budget:</span>
-                                    <span className="meta-value">${tender.estimatedBudget}</span>
-                                </div>
-                                <div className="meta-item">
-                                    <span className="meta-label">Category:</span>
-                                    <span className="meta-value">{tender.category}</span>
-                                </div>
-                            </div>
-
-                            <div className="tender-actions">
-                                <Link to={`/tender/${tender.id}`} className="btn btn-secondary">View Details</Link>
-                                {tender.status === "Open" && !hasBid(tender.id) && (
-                                    <Link to={`/submit-bid/${tender.id}`} className="btn btn-primary">Submit Bid</Link>
-                                )}
-                                {hasBid(tender.id) && (
-                                    <span className="bid-submitted">Bid Submitted</span>
-                                )}
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <p className="no-results">No tenders match your criteria.</p>
-                )}
-            </div>
-
-            <div className="refresh-section">
-                <button onClick={() => fetchTenders()} className="btn btn-secondary">
-                    Refresh Tenders
-                </button>
-            </div>
+            )}
         </div>
     );
-}
+};
 
-export default AvailableTenders;
+export default AllTenders;

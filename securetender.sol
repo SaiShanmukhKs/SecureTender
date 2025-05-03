@@ -128,7 +128,11 @@ contract BlockchainTendering {
         return activeTenders;
     }
 
-    function getTede
+    function getTenderDetails(uint _tenderId) external view returns (Tender memory) {
+        Tender storage tender = tenders[_tenderId];
+
+        return tender;
+    }
 
     function placeBid(
         uint _tenderId,
@@ -228,16 +232,57 @@ contract BlockchainTendering {
         tenders[_tenderId].tenderStatus = TenderStatus(_newStatus);
     }
 
-    function getBidsForTender(uint _tenderId) public view validTender(_tenderId) returns (uint[] memory) {
-        return tenders[_tenderId].bidIds;
+    // IMPROVED: Return Bid objects instead of just IDs
+    function getBidsForTender(uint _tenderId) public view validTender(_tenderId) returns (Bid[] memory) {
+        uint[] memory bidIds = tenders[_tenderId].bidIds;
+        Bid[] memory tenderBids = new Bid[](bidIds.length);
+        
+        for (uint i = 0; i < bidIds.length; i++) {
+            tenderBids[i] = bids[bidIds[i]];
+        }
+        
+        return tenderBids;
     }
 
-    function getTendersByCreator(address _creator) public view returns (uint[] memory) {
-        return tendersByCreator[_creator];
+    // IMPROVED: Return Tender objects instead of just IDs
+    function getTendersByCreator(address _creator) public view returns (Tender[] memory) {
+        uint[] memory creatorTenderIds = tendersByCreator[_creator];
+        Tender[] memory creatorTenders = new Tender[](creatorTenderIds.length);
+        
+        for (uint i = 0; i < creatorTenderIds.length; i++) {
+            creatorTenders[i] = tenders[creatorTenderIds[i]];
+        }
+        
+        return creatorTenders;
     }
 
-    function getBidsByBidder(address _bidder) public view returns (uint[] memory) {
-        return bidsByBidder[_bidder];
+    // IMPROVED: Return complete Bid objects instead of just IDs
+    // This function returns all bids placed by a specific bidder address
+    function getBidsByBidder(address _bidder) public view returns (Bid[] memory) {
+        // First get the bid IDs associated with this bidder
+        uint[] memory bidderBidIds = bidsByBidder[_bidder];
+        
+        // Create an array to hold the actual Bid objects
+        Bid[] memory bidderBids = new Bid[](bidderBidIds.length);
+        
+        // Populate the array with full Bid objects by referencing each ID
+        for (uint i = 0; i < bidderBidIds.length; i++) {
+            bidderBids[i] = bids[bidderBidIds[i]];
+        }
+        
+        return bidderBids;
+    }
+
+    // NEW: Get transactions for a specific tender
+    function getTransactionsForTender(uint _tenderId) public view validTender(_tenderId) returns (Transaction[] memory) {
+        uint[] memory txIds = tenders[_tenderId].transactionIds;
+        Transaction[] memory tenderTxs = new Transaction[](txIds.length);
+        
+        for (uint i = 0; i < txIds.length; i++) {
+            tenderTxs[i] = transactions[txIds[i]];
+        }
+        
+        return tenderTxs;
     }
 
     receive() external payable {}

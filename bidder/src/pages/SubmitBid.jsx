@@ -1,12 +1,24 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BidderContext } from '../contexts/BidderContext';
+import { useBlockchainTendering } from '../contexts/ContractContext';
 
 function SubmitBid() {
-    const { submitBid, getTenderById, isLoading, error } = useContext(BidderContext);
+    // const { submitBid, getTenderById, isLoading, error } = useContext(BidderContext);
     const { id } = useParams();
     const tenderId = parseInt(id);
     const navigate = useNavigate();
+
+    const statusMapping = {
+        "0": "Closed",
+        "1": "Open",
+        "2": "Cancelled"
+    };
+
+    const getStatusKey = (status) => status.toString();
+
+
+
+    const blockchain = useBlockchainTendering();
 
     const [tender, setTender] = useState(null);
     const [fetchingTender, setFetchingTender] = useState(true);
@@ -22,8 +34,10 @@ function SubmitBid() {
         const fetchTender = async () => {
             setFetchingTender(true);
             try {
-                const tenderData = await getTenderById(tenderId);
+                const tenderData = await blockchain.getTenderDetails(tenderId);
                 if (tenderData) {
+                    console.log("Tender data:", tenderData.tenderStatus);
+                    console.log("Tender data:", statusMapping[getStatusKey(tenderData.tenderStatus)]);
                     setTender(tenderData);
                 }
             } catch (err) {
@@ -36,7 +50,7 @@ function SubmitBid() {
         if (tenderId) {
             fetchTender();
         }
-    }, [tenderId, getTenderById]);
+    }, [tenderId, blockchain]);
 
     if (fetchingTender) {
         return <div className="loading">Loading tender details...</div>;
@@ -46,7 +60,7 @@ function SubmitBid() {
         return <div className="error-message">Tender not found</div>;
     }
 
-    if (tender.status !== "Open") {
+    if (statusMapping[getStatusKey(tender.tenderStatus)] !== "Open") {
         return (
             <div className="submit-bid">
                 <h1>Submit Bid</h1>
@@ -68,13 +82,21 @@ function SubmitBid() {
         });
     };
 
+    const tenderFeeInWei = typeof tender.tenderFee === 'bigint' ?
+        tender.tenderFee.toString() : tender.tenderFee;
+
+    const registrationFeeInWei = typeof tender.registrationFee === 'bigint' ?
+        tender.registrationFee.toString() : tender.registrationFee;
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setBidSubmitting(true);
+        console.log("Submitting bid data:", bidData);
         setBidError(null);
 
         try {
-            const result = await submitBid(tenderId, bidData);
+            // (tenderId, bidDetails, amount, paymentAmount
+            const result = await blockchain.placeBid(tenderId, bidData.notes, bidData.bidAmount);
             if (result) {
                 navigate("/my-bids");
             } else {
@@ -102,8 +124,11 @@ function SubmitBid() {
                 <p>{tender.description}</p>
                 <div className="summary-details">
                     <p><strong>Created by:</strong> {tender.createdBy}</p>
-                    <p><strong>Deadline:</strong> {tender.deadline}</p>
-                    <p><strong>Estimated Budget:</strong> ${tender.estimatedBudget}</p>
+                    <p><strong>Deadline:</strong> {new Date(Number(tender.endDate) * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+                    <p><strong>Tender Fee:</strong> ${blockchain.fromWei ? blockchain.fromWei(tenderFeeInWei) :
+                        (tenderFeeInWei / 1e18).toString()}</p>
+                    <p><strong>Registration Fee:</strong> ${blockchain.fromWei ? blockchain.fromWei(registrationFeeInWei) :
+                        (registrationFeeInWei / 1e18).toString()}</p>
                 </div>
             </div>
 

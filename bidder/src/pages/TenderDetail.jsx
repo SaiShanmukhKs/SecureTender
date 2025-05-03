@@ -1,136 +1,107 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { BidderContext } from '../contexts/BidderContext';
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useBlockchainTendering } from '../contexts/ContractContext';
+import StatusBadge from '../components/StatusBadge';
+import useParams from '../hooks/useParams';
 
-function TenderDetail() {
-    const { getTenderById, fetchMyBids, myBids, isLoading, error } = useContext(BidderContext);
+const TenderDetail = () => {
+    const [tender, setTender] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const blockchain = useBlockchainTendering();
+    const navigate = useNavigate();
     const { id } = useParams();
     const tenderId = parseInt(id);
-    const navigate = useNavigate();
 
-    const [tender, setTender] = useState(null);
-    const [localLoading, setLocalLoading] = useState(true);
-    const [localError, setLocalError] = useState(null);
-    const [myBid, setMyBid] = useState(null);
+    const statusMapping = {
+        "0": "Closed",
+        "1": "Open",
+        "2": "Cancelled"
+    };
+
+    const getStatusKey = (status) => status.toString();
 
     useEffect(() => {
-        const loadData = async () => {
-            setLocalLoading(true);
+        const fetchTenderDetails = async () => {
             try {
-                // Fetch the specific tender by ID
-                const tenderData = await getTenderById(tenderId);
-                setTender(tenderData);
-
-                // Fetch user's bids to find if there's one for this tender
-                await fetchMyBids();
-            } catch (err) {
-                setLocalError(err.message || 'Failed to load tender details');
+                setLoading(true);
+                const tenderDetails = await blockchain.getTenderDetails(tenderId);
+                setTender(tenderDetails);
+                setError(null);
+            } catch (error) {
+                console.error("Error fetching tender details:", error);
+                setError("Failed to load tender details. Please check your connection to MetaMask and try again.");
             } finally {
-                setLocalLoading(false);
+                setLoading(false);
             }
         };
 
-        loadData();
-    }, [tenderId, getTenderById, fetchMyBids]);
+        fetchTenderDetails();
+    }, [blockchain, tenderId]);
 
-    // Find the bid for this tender from the myBids array
-    useEffect(() => {
-        if (myBids && myBids.length > 0) {
-            const bid = myBids.find(b => b.tenderId === tenderId);
-            setMyBid(bid);
-        }
-    }, [myBids, tenderId]);
+    if (loading) return <div className="no-results">Loading tender details...</div>;
+    if (error) return <div className="no-results">{error}</div>;
+    if (!tender) return <div className="no-results">Tender not found</div>;
 
-    if (localLoading || isLoading) {
-        return <div>Loading tender details...</div>;
-    }
+    const handleAward = (bidderId) => {
+        blockchain.awardTender(tenderId, bidderId);
+        navigate("/awarded-tenders");
+    };
 
-    if (localError || error) {
-        return <div>Error: {localError || error}</div>;
-    }
+    const handleSubmitBid = () => {
+        navigate(`/submit-bid/${tenderId}`);
+    };
 
-    if (!tender) {
-        return <div>Tender not found</div>;
-    }
+    const awardedBidder = tender.awardedTo
+        ? tender.bidders.find(b => b.id === tender.awardedTo)
+        : null;
 
     return (
-        <div className="tender-detail">
-            <h1>Tender Details</h1>
-
+        <div className="content">
             <div className="detail-header">
-                <h2>{tender.title}</h2>
-                <span className={`status ${tender.status.toLowerCase()}`}>{tender.status}</span>
+                <h1>{tender.title}</h1>
+                <StatusBadge status={statusMapping[getStatusKey(tender.tenderStatus)]} />
             </div>
 
             <div className="detail-section">
-                <h3>Description</h3>
-                <p>{tender.description}</p>
-            </div>
-
-            <div className="detail-grid">
-                <div className="detail-item">
-                    <h3>Created By</h3>
-                    <p>{tender.createdBy}</p>
-                </div>
-                <div className="detail-item">
-                    <h3>Category</h3>
-                    <p>{tender.category}</p>
-                </div>
-                <div className="detail-item">
-                    <h3>Estimated Budget</h3>
-                    <p>${tender.estimatedBudget}</p>
-                </div>
-                <div className="detail-item">
-                    <h3>Submission Deadline</h3>
-                    <p>{tender.deadline}</p>
+                <div className="detail-grid">
+                    <div className="detail-item">
+                        <strong>Deadline</strong>
+                        <p>{new Date(Number(tender.endDate) * 1000).toLocaleDateString('en-GB')}</p>
+                    </div>
+                    <div className="detail-item">
+                        <strong>Description</strong>
+                        <p>{tender.rfp}</p>
+                    </div>
                 </div>
             </div>
 
-            <div className="detail-section">
-                <h3>Documents</h3>
-                <ul className="document-list">
-                    {tender.documents && tender.documents.map((doc, index) => (
-                        <li key={index}>
-                            <span className="document-icon">📄</span>
-                            <span className="document-name">{doc}</span>
-                            <button className="btn btn-sm">Download</button>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-
-            {myBid && (
-                <div className="my-bid-section">
-                    <h3>My Bid</h3>
-                    <div className="bid-details">
-                        <div className="bid-info">
-                            <p><strong>Amount:</strong> ${myBid.bidAmount.toLocaleString()}</p>
-                            <p><strong>Submitted:</strong> {myBid.submissionDate}</p>
-                            <p><strong>Status:</strong> <span className={`status ${myBid.status.toLowerCase()}`}>{myBid.status}</span></p>
-                        </div>
-                        <div className="bid-notes">
-                            <p><strong>Notes:</strong></p>
-                            <p>{myBid.notes}</p>
-                        </div>
+            {awardedBidder && (
+                <div className="detail-section">
+                    <h3>Awarded To</h3>
+                    <div className="detail-grid">
+                        <div className="detail-item"><strong>Vendor</strong><p>{awardedBidder.name}</p></div>
+                        <div className="detail-item"><strong>Bid Amount</strong><p>${awardedBidder.bid.toLocaleString()}</p></div>
+                        <div className="detail-item"><strong>Rating</strong><p>{awardedBidder.rating.toFixed(1)}/5</p></div>
                     </div>
                 </div>
             )}
 
-            <div className="detail-actions">
-                {tender.status === "Open" && !myBid && (
-                    <button
-                        onClick={() => navigate(`/submit-bid/${tenderId}`)}
-                        className="btn btn-primary"
-                    >
+            {statusMapping[getStatusKey(tender.tenderStatus)] === "Open" && (
+                <div className="detail-section">
+                    <h3>Submit Your Bid</h3>
+                    <p>Interested in bidding on this tender? Click the button below to submit your proposal.</p>
+                    <button className="btn btn-primary" onClick={handleSubmitBid}>
                         Submit Bid
                     </button>
-                )}
-                <button onClick={() => navigate("/tenders")} className="btn btn-secondary">
-                    Back to Tenders
-                </button>
+                </div>
+            )}
+
+            <div className="form-actions">
+                <Link to="/tenders" className="btn btn-secondary">Back to All Tenders</Link>
             </div>
         </div>
     );
-}
+};
 
 export default TenderDetail;

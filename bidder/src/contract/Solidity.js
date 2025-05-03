@@ -237,46 +237,9 @@ export const ABI = [
     name: "getBidsByBidder",
     outputs: [
       {
-        components: [
-          {
-            internalType: "uint256",
-            name: "bidId",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "tenderId",
-            type: "uint256",
-          },
-          {
-            internalType: "address",
-            name: "createdBy",
-            type: "address",
-          },
-          {
-            internalType: "string",
-            name: "detailsFile",
-            type: "string",
-          },
-          {
-            internalType: "uint256",
-            name: "amount",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "issueDate",
-            type: "uint256",
-          },
-          {
-            internalType: "enum BlockchainTendering.BidStatus",
-            name: "status",
-            type: "uint8",
-          },
-        ],
-        internalType: "struct BlockchainTendering.Bid[]",
+        internalType: "uint256[]",
         name: "",
-        type: "tuple[]",
+        type: "uint256[]",
       },
     ],
     stateMutability: "view",
@@ -293,46 +256,9 @@ export const ABI = [
     name: "getBidsForTender",
     outputs: [
       {
-        components: [
-          {
-            internalType: "uint256",
-            name: "bidId",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "tenderId",
-            type: "uint256",
-          },
-          {
-            internalType: "address",
-            name: "createdBy",
-            type: "address",
-          },
-          {
-            internalType: "string",
-            name: "detailsFile",
-            type: "string",
-          },
-          {
-            internalType: "uint256",
-            name: "amount",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "issueDate",
-            type: "uint256",
-          },
-          {
-            internalType: "enum BlockchainTendering.BidStatus",
-            name: "status",
-            type: "uint8",
-          },
-        ],
-        internalType: "struct BlockchainTendering.Bid[]",
+        internalType: "uint256[]",
         name: "",
-        type: "tuple[]",
+        type: "uint256[]",
       },
     ],
     stateMutability: "view",
@@ -435,127 +361,9 @@ export const ABI = [
     name: "getTendersByCreator",
     outputs: [
       {
-        components: [
-          {
-            internalType: "uint256",
-            name: "tenderId",
-            type: "uint256",
-          },
-          {
-            internalType: "string",
-            name: "title",
-            type: "string",
-          },
-          {
-            internalType: "string",
-            name: "rfp",
-            type: "string",
-          },
-          {
-            internalType: "uint256",
-            name: "startDate",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "endDate",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "tenderFee",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "registrationFee",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "moneyDispersalPhases",
-            type: "uint256",
-          },
-          {
-            internalType: "address",
-            name: "createdBy",
-            type: "address",
-          },
-          {
-            internalType: "enum BlockchainTendering.TenderStatus",
-            name: "tenderStatus",
-            type: "uint8",
-          },
-          {
-            internalType: "address",
-            name: "winner",
-            type: "address",
-          },
-          {
-            internalType: "uint256[]",
-            name: "bidIds",
-            type: "uint256[]",
-          },
-          {
-            internalType: "uint256[]",
-            name: "transactionIds",
-            type: "uint256[]",
-          },
-        ],
-        internalType: "struct BlockchainTendering.Tender[]",
+        internalType: "uint256[]",
         name: "",
-        type: "tuple[]",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_tenderId",
-        type: "uint256",
-      },
-    ],
-    name: "getTransactionsForTender",
-    outputs: [
-      {
-        components: [
-          {
-            internalType: "uint256",
-            name: "txId",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "tenderId",
-            type: "uint256",
-          },
-          {
-            internalType: "address",
-            name: "bidder",
-            type: "address",
-          },
-          {
-            internalType: "uint256",
-            name: "amount",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "timestamp",
-            type: "uint256",
-          },
-          {
-            internalType: "string",
-            name: "status",
-            type: "string",
-          },
-        ],
-        internalType: "struct BlockchainTendering.Transaction[]",
-        name: "",
-        type: "tuple[]",
+        type: "uint256[]",
       },
     ],
     stateMutability: "view",
@@ -842,4 +650,4 @@ export const ABI = [
   },
 ];
 
-export const ADDRESS = "0x5eE29ADF5e63651FD60bf5Bb6B6E0edFD69fE3fd";
+export const ADDRESS = "0x5c51a73Db5808032A396E15782eB97B7891Fd6ae";

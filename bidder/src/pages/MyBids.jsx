@@ -1,11 +1,79 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { BidderContext } from '../contexts/BidderContext';
+import { useBlockchainTendering } from '../contexts/ContractContext';
 
 function MyBids() {
-    const { myBids, fetchMyBids, isLoading, error } = useContext(BidderContext);
+    const statusMapping = {
+        "0": "Closed",
+        "1": "Open",
+        "2": "Cancelled"
+    };
+
+    const getStatusKey = (status) => status.toString();
+
+    const blockchain = useBlockchainTendering();
     const [filter, setFilter] = useState("all");
     const [filteredBids, setFilteredBids] = useState([]);
+    const [myBids, setMyBids] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Define the fetchMyBids function as a useCallback
+    const fetchMyBids = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            // First, get the current user's address from metamask
+            const accounts = await window.ethereum.request({
+                method: 'eth_requestAccounts'
+            });
+            const userAddress = accounts[0];
+
+            if (!userAddress) {
+                throw new Error("No connected wallet found");
+            }
+
+            // Get all bid IDs for the current user using the contract function
+            const bidIds = await blockchain.getBidderBids(userAddress);
+            console.log("Bid IDs:", bidIds);
+            const userBids = [];
+
+            // Process each bid
+            for (const bidId of bidIds) {
+                // Get bid details
+                const bid = await blockchain.getBid(bidId);
+
+                // Get tender details to add title
+                const tenderDetails = await blockchain.getTenderDetails(bid.tenderId);
+
+                // Convert the BidStatus enum to string representation
+                let statusText = "Submitted";
+                if (bid.status === 1) statusText = "Accepted";
+                else if (bid.status === 2) statusText = "Rejected";
+
+                // Format bid for display
+                userBids.push({
+                    id: bidId,
+                    tenderId: bid.tenderId,
+                    tenderTitle: tenderDetails.title,
+                    bidAmount: parseFloat(bid.amount),
+                    submissionDate: new Date(Number(bid.issueDate) * 1000).toLocaleDateString('en-GB', {
+                        day: '2-digit', month: '2-digit', year: 'numeric'
+                    }),
+                    status: statusText,
+                    notes: bid.detailsFile
+                });
+            }
+
+            setMyBids(userBids);
+        } catch (err) {
+            console.error('Error fetching bids:', err);
+            setError(err.message || "Failed to fetch your bids");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [blockchain]);
 
     // Fetch bids when component mounts
     useEffect(() => {

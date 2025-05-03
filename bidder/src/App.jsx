@@ -8,10 +8,12 @@ import TenderDetail from './pages/TenderDetail';
 import MyBids from './pages/MyBids';
 import BidderProfile from './pages/BidderProfile';
 import SubmitBid from './pages/SubmitBid';
+import { BlockchainTenderingProvider } from './contexts/ContractContext';
 
 function App() {
   return (
-    <BidderProvider>
+    <BlockchainTenderingProvider>
+      {/* <BidderProvider> */}
       <Router>
         <div className="app-container">
           <Navbar />
@@ -27,7 +29,8 @@ function App() {
           </div>
         </div>
       </Router>
-    </BidderProvider>
+      {/* </BidderProvider> */}
+    </BlockchainTenderingProvider>
   );
 }
 

@@ -29,7 +29,7 @@ const AllTenders = () => {
                     // Enum mapping: TenderStatus {Closed=0, Open=1, Cancelled=2}
                     const statusMapping = {
                         "0": "Closed",
-                        "1": "Active",
+                        "1": "Open",
                         "2": "Cancelled"
                     };
 
