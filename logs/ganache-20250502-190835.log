@@ -1,0 +1,5 @@
+[2025/05/02 19:49:08.814] -    >  eth_getBlockByNumber: [
+   >   "latest",
+   >   false
+   > ]
+[2025/05/02 19:49:08.831] -    >  net_version: []
