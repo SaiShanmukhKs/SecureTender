@@ -35,29 +35,45 @@ function MyBids() {
             }
 
             // Get all bid IDs for the current user using the contract function
-            const bidIds = await blockchain.getBidderBids(userAddress);
-            console.log("Bid IDs:", bidIds);
+            const myBids = await blockchain.getBidderBids(userAddress);
+            console.log("Bid IDs:", myBids);
             const userBids = [];
 
             // Process each bid
-            for (const bidId of bidIds) {
+            for (const bid of myBids) {
                 // Get bid details
-                const bid = await blockchain.getBid(bidId);
+                console.log(typeof (bid.detailsFile));
+                // const bid = await blockchain.getBidDetails(bid);
 
                 // Get tender details to add title
                 const tenderDetails = await blockchain.getTenderDetails(bid.tenderId);
+
+
+                // Enum mapping: TenderStatus {Closed=0, Open=1, Cancelled=2}
+                const statusMapping = {
+                    "0": "Closed",
+                    "1": "Open",
+                    "2": "Cancelled"
+                }
+
+                const statusKey = typeof bid.status === 'bigint' ?
+                    bid.status.toString() : bid.status.toString();
 
                 // Convert the BidStatus enum to string representation
                 let statusText = "Submitted";
                 if (bid.status === 1) statusText = "Accepted";
                 else if (bid.status === 2) statusText = "Rejected";
 
+                const bidAmountInWei = typeof bid.amount === 'bigint' ?
+                    bid.amount.toString() : bid.amount;
+
                 // Format bid for display
                 userBids.push({
-                    id: bidId,
+                    id: bid,
                     tenderId: bid.tenderId,
                     tenderTitle: tenderDetails.title,
-                    bidAmount: parseFloat(bid.amount),
+                    bidAmount: blockchain.fromWei ? blockchain.fromWei(bidAmountInWei) :
+                        (bidAmountInWei / 1e18).toString(),
                     submissionDate: new Date(Number(bid.issueDate) * 1000).toLocaleDateString('en-GB', {
                         day: '2-digit', month: '2-digit', year: 'numeric'
                     }),
@@ -150,7 +166,7 @@ function MyBids() {
                                 <div className="bid-info-row">
                                     <div className="bid-info-item">
                                         <span className="label">Bid Amount:</span>
-                                        <span className="value">${bid.bidAmount.toLocaleString()}</span>
+                                        <span className="value">{bid.bidAmount.toLocaleString()} ETH</span>
                                     </div>
                                     <div className="bid-info-item">
                                         <span className="label">Submitted On:</span>

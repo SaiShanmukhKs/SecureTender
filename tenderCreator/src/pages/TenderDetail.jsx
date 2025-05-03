@@ -48,6 +48,7 @@ const TenderDetail = () => {
         const scoreB = (b.rating * 10000) / b.bid;
         return scoreB - scoreA;
     });
+    console.log("Sorted Bidders: ", sortedBidders);
 
     const handleAward = (bidderId) => {
         blockchain.awardTender(tenderId, bidderId);

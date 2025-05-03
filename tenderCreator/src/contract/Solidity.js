@@ -1,5 +1,182 @@
 export const ABI = [
   {
+    inputs: [
+      {
+        internalType: "string",
+        name: "title",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "rfp",
+        type: "string",
+      },
+      {
+        internalType: "uint256",
+        name: "startDate",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "endDate",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "tenderFee",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "registrationFee",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "phases",
+        type: "uint256",
+      },
+    ],
+    name: "createTender",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_tenderId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_amount",
+        type: "uint256",
+      },
+    ],
+    name: "disperseFunds",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "tenderId",
+            type: "uint256",
+          },
+          {
+            internalType: "address",
+            name: "bidder",
+            type: "address",
+          },
+          {
+            internalType: "uint256",
+            name: "amount",
+            type: "uint256",
+          },
+          {
+            internalType: "string",
+            name: "status",
+            type: "string",
+          },
+        ],
+        internalType: "struct BlockchainTendering.TransactionInput",
+        name: "input",
+        type: "tuple",
+      },
+    ],
+    name: "logTransaction",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_tenderId",
+        type: "uint256",
+      },
+      {
+        internalType: "string",
+        name: "_detailsFile",
+        type: "string",
+      },
+      {
+        internalType: "uint256",
+        name: "_amount",
+        type: "uint256",
+      },
+    ],
+    name: "placeBid",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_bidId",
+        type: "uint256",
+      },
+      {
+        internalType: "enum BlockchainTendering.BidStatus",
+        name: "_status",
+        type: "uint8",
+      },
+    ],
+    name: "setBidStatus",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_tenderId",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "_winner",
+        type: "address",
+      },
+    ],
+    name: "setWinner",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_tenderId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_newStatus",
+        type: "uint256",
+      },
+    ],
+    name: "updateStatus",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    stateMutability: "payable",
+    type: "receive",
+  },
+  {
     inputs: [],
     name: "bidCount",
     outputs: [
@@ -83,67 +260,6 @@ export const ABI = [
       },
     ],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "title",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "rfp",
-        type: "string",
-      },
-      {
-        internalType: "uint256",
-        name: "startDate",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "endDate",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "tenderFee",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "registrationFee",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "phases",
-        type: "uint256",
-      },
-    ],
-    name: "createTender",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_tenderId",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "_amount",
-        type: "uint256",
-      },
-    ],
-    name: "disperseFunds",
-    outputs: [],
-    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -562,100 +678,6 @@ export const ABI = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        components: [
-          {
-            internalType: "uint256",
-            name: "tenderId",
-            type: "uint256",
-          },
-          {
-            internalType: "address",
-            name: "bidder",
-            type: "address",
-          },
-          {
-            internalType: "uint256",
-            name: "amount",
-            type: "uint256",
-          },
-          {
-            internalType: "string",
-            name: "status",
-            type: "string",
-          },
-        ],
-        internalType: "struct BlockchainTendering.TransactionInput",
-        name: "input",
-        type: "tuple",
-      },
-    ],
-    name: "logTransaction",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_tenderId",
-        type: "uint256",
-      },
-      {
-        internalType: "string",
-        name: "_detailsFile",
-        type: "string",
-      },
-      {
-        internalType: "uint256",
-        name: "_amount",
-        type: "uint256",
-      },
-    ],
-    name: "placeBid",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_bidId",
-        type: "uint256",
-      },
-      {
-        internalType: "enum BlockchainTendering.BidStatus",
-        name: "_status",
-        type: "uint8",
-      },
-    ],
-    name: "setBidStatus",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_tenderId",
-        type: "uint256",
-      },
-      {
-        internalType: "address",
-        name: "_winner",
-        type: "address",
-      },
-    ],
-    name: "setWinner",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
     inputs: [],
     name: "tenderCount",
     outputs: [
@@ -818,28 +840,6 @@ export const ABI = [
     stateMutability: "view",
     type: "function",
   },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_tenderId",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "_newStatus",
-        type: "uint256",
-      },
-    ],
-    name: "updateStatus",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    stateMutability: "payable",
-    type: "receive",
-  },
 ];
 
-export const ADDRESS = "0x5eE29ADF5e63651FD60bf5Bb6B6E0edFD69fE3fd";
+export const ADDRESS = "0x2aAe153dF676b012Ca263404b55d2963b6cdD7f6";

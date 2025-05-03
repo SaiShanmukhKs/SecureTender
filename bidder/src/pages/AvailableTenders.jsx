@@ -15,7 +15,7 @@ const AllTenders = () => {
                 setLoading(true);
                 // Get all active tenders from the blockchain
                 const activeTenders = await blockchain.getActiveTenders();
-                console.log(activeTenders);
+                console.log("Active: ", activeTenders);
 
                 // Format the tender data based on the actual return structure
                 const tendersData = activeTenders.map((tender) => {
