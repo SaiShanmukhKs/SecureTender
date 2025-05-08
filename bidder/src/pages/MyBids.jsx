@@ -4,9 +4,9 @@ import { useBlockchainTendering } from '../contexts/ContractContext';
 
 function MyBids() {
     const statusMapping = {
-        "0": "Closed",
-        "1": "Open",
-        "2": "Cancelled"
+        "0": "Pending",
+        "1": "Accepted",
+        "2": "Rejected"
     };
 
     const getStatusKey = (status) => status.toString();
@@ -41,28 +41,14 @@ function MyBids() {
 
             // Process each bid
             for (const bid of myBids) {
-                // Get bid details
-                console.log(typeof (bid.detailsFile));
-                // const bid = await blockchain.getBidDetails(bid);
-
                 // Get tender details to add title
                 const tenderDetails = await blockchain.getTenderDetails(bid.tenderId);
-
-
-                // Enum mapping: TenderStatus {Closed=0, Open=1, Cancelled=2}
-                const statusMapping = {
-                    "0": "Closed",
-                    "1": "Open",
-                    "2": "Cancelled"
-                }
 
                 const statusKey = typeof bid.status === 'bigint' ?
                     bid.status.toString() : bid.status.toString();
 
                 // Convert the BidStatus enum to string representation
-                let statusText = "Submitted";
-                if (bid.status === 1) statusText = "Accepted";
-                else if (bid.status === 2) statusText = "Rejected";
+                const statusText = statusMapping[statusKey] || "Unknown";
 
                 const bidAmountInWei = typeof bid.amount === 'bigint' ?
                     bid.amount.toString() : bid.amount;
@@ -124,22 +110,16 @@ function MyBids() {
                     All Bids
                 </button>
                 <button
-                    className={filter === "submitted" ? "active" : ""}
-                    onClick={() => setFilter("submitted")}
+                    className={filter === "pending" ? "active" : ""}
+                    onClick={() => setFilter("pending")}
                 >
-                    Submitted
+                    Pending
                 </button>
                 <button
-                    className={filter === "shortlisted" ? "active" : ""}
-                    onClick={() => setFilter("shortlisted")}
+                    className={filter === "accepted" ? "active" : ""}
+                    onClick={() => setFilter("accepted")}
                 >
-                    Shortlisted
-                </button>
-                <button
-                    className={filter === "awarded" ? "active" : ""}
-                    onClick={() => setFilter("awarded")}
-                >
-                    Awarded
+                    Accepted
                 </button>
                 <button
                     className={filter === "rejected" ? "active" : ""}

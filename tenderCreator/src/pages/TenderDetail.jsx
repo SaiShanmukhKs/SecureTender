@@ -6,6 +6,7 @@ import useParams from '../hooks/useParams';
 
 const TenderDetail = () => {
     const [tender, setTender] = useState(null);
+    const [bids, setBids] = useState([])
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const blockchain = useBlockchainTendering();
@@ -19,6 +20,11 @@ const TenderDetail = () => {
         "2": "Cancelled"
     };
 
+    const getName = (address) => {
+        const name = address.substring(0, 6) + "..." + address.substring(address.length - 4, address.length);
+        return name;
+    };
+
     const getStatusKey = (status) => status.toString();
 
     useEffect(() => {
@@ -26,6 +32,8 @@ const TenderDetail = () => {
             try {
                 setLoading(true);
                 const tenderDetails = await blockchain.getTenderDetails(tenderId);
+                const bidDetails = await blockchain.getBidsForTender(tenderId);
+                setBids(bidDetails);
                 setTender(tenderDetails);
                 setError(null);
             } catch (error) {
@@ -43,11 +51,11 @@ const TenderDetail = () => {
     if (error) return <div className="no-results">{error}</div>;
     if (!tender) return <div className="no-results">Tender not found</div>;
 
-    const sortedBidders = [...tender.bidIds].sort((a, b) => {
-        const scoreA = (a.rating * 10000) / a.bid;
-        const scoreB = (b.rating * 10000) / b.bid;
-        return scoreB - scoreA;
+    const sortedBidders = bids.sort((a, b) => {
+        return a.amount.toString() - b.amount.toString();
     });
+
+
     console.log("Sorted Bidders: ", sortedBidders);
 
     const handleAward = (bidderId) => {
@@ -105,14 +113,16 @@ const TenderDetail = () => {
                                 </tr>
                             </thead>
                             <tbody>
+                                {console.log("Bidders: ", sortedBidders[0][0].createdBy)}
                                 {sortedBidders.slice(0, 3).map((bidder, index) => (
-                                    <tr key={bidder.id}>
+                                    <tr key={bidder.bidId}>
                                         <td>{index + 1}</td>
-                                        <td>{bidder.name}</td>
-                                        <td>${bidder.bid.toLocaleString()}</td>
-                                        <td>{bidder.rating.toFixed(1)}/5</td>
+                                        <td>{bidder.createdBy}</td>
+                                        <td>{blockchain.fromWei ? blockchain.fromWei(bidder.amount) :
+                            (bidder.amount / 1e18).toString()}</td>
+                                        <td>{4.9}</td>
                                         <td>
-                                            <button className="btn btn-primary btn-sm" onClick={() => handleAward(bidder.id)}>
+                                            <button className="btn btn-primary btn-sm" onClick={() => handleAward(bidder.createdBy)}>
                                                 Award Tender
                                             </button>
                                         </td>

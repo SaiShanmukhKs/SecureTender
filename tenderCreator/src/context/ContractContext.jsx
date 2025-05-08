@@ -134,6 +134,17 @@ export const BlockchainTenderingProvider = ({ children }) => {
                 value: value
             });
         },
+        
+        awardTender: async(bidId, winnerAddress) => {
+            const txOptions = await getTxOptions();
+            return await contract.methods.setWinner(bidId, winnerAddress).send(txOptions);
+
+        },
+
+        getBidsForTender: async (tenderId) => {
+            const txOptions = await getTxOptions();
+            return await contract.methods.getBidsForTender(tenderId).call(txOptions);
+        },
 
         approveBid: async (tenderId, bidId) => {
             const txOptions = await getTxOptions();
@@ -179,6 +190,9 @@ export const BlockchainTenderingProvider = ({ children }) => {
         // View functions
         getActiveTenders: async () => {
             return await contract.methods.getActiveTenders().call();
+        },
+        getAwardedTenders: async () => {
+            return await contract.methods.getAwardedTenders().call();
         },
 
         getTenderDetails: async (tenderId) => {
