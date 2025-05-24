@@ -19,8 +19,9 @@ function App() {
           <Navbar />
           <div className="content">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/tenders" element={<AvailableTenders />} />
+              {/* <Route path="/" element={<Dashboard />} /> */}
+              <Route path="/" element={<AvailableTenders />} />
+              {/* <Route path="/tenders" element={<AvailableTenders />} /> */}
               <Route path="/tender/:id" element={<TenderDetail />} />
               <Route path="/my-bids" element={<MyBids />} />
               <Route path="/profile" element={<BidderProfile />} />

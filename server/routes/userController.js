@@ -38,7 +38,7 @@ export const registerUser = async (Model, req, res) => {
       address: newUser.walletAddress,
       role: newUser.role,
     };
-
+    console.log("User registered:", userResponse);
     const token = jwt.sign({ userResponse }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });

@@ -1,46 +1,128 @@
-import React, { useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TenderContext } from '../../context/TenderContext';
 
 const AwardedTenders = () => {
-    const { tenders } = useContext(TenderContext);
-    const awardedTenders = tenders.filter(tender => tender.status === "Awarded");
+    const [tenders, setTenders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const blockchain = useBlockchainTendering();
+
+    useEffect(() => {
+        const fetchTenders = async () => {
+            try {
+                setLoading(true);
+                // Get all active tenders from the blockchain
+                const awardedTenders = await blockchain.getAwardedTenders();
+                console.log(awardedTenders);
+
+                // Format the tender data based on the actual return structure
+                const tendersData = awardedTenders.map((tender) => {
+                    // Converting BigInt to regular numbers for display
+                    const tenderFeeInWei = typeof tender.tenderFee === 'bigint' ?
+                        tender.tenderFee.toString() : tender.tenderFee;
+
+                    const registrationFeeInWei = typeof tender.registrationFee === 'bigint' ?
+                        tender.registrationFee.toString() : tender.registrationFee;
+
+                    // Enum mapping: TenderStatus {Closed=0, Open=1, Cancelled=2}
+                    const statusMapping = {
+                        "0": "Closed",
+                        "1": "Open",
+                        "2": "Cancelled"
+                    };
+
+                    const statusKey = typeof tender.tenderStatus === 'bigint' ?
+                        tender.tenderStatus.toString() : tender.tenderStatus.toString();
+
+                    return {
+                        id: tender.tenderId.toString(),
+                        title: tender.title,
+                        deadline: new Date(Number(tender.endDate) * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                        status: statusMapping[statusKey] || "Unknown",
+                        bidders: tender.bidIds ? tender.bidIds.length : 0,
+                        tenderFee: blockchain.fromWei ? blockchain.fromWei(tenderFeeInWei) :
+                            (tenderFeeInWei / 1e18).toString(),
+                        registrationFee: blockchain.fromWei ? blockchain.fromWei(registrationFeeInWei) :
+                            (registrationFeeInWei / 1e18).toString(),
+                        createdBy: tender.createdBy
+                    };
+                });
+                console.log("TendersData", tendersData);
+                setTenders(tendersData);
+            } catch (err) {
+                console.error("Error fetching tenders:", err);
+                setError("Failed to load tenders. Please check your connection and try again.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (blockchain.account) {
+            fetchTenders();
+        }
+    }, [blockchain.account]);
+
+    if (loading) {
+        return <div className="loading">Loading tenders...</div>;
+    }
+
+    if (error) {
+        return <div className="error-message">{error}</div>;
+    }
+
+    const awardedTenders = tenders.filter(tender => tender.status === "Closed");
 
     return (
-        <div className="awarded-tenders">
-            <h1>Awarded Tenders</h1>
+        <div className="awarded-tenders container mx-auto py-8 px-4">
+            <h1 className="text-2xl font-bold mb-6">Awarded Tenders</h1>
+
             {awardedTenders.length === 0 ? (
-                <p>No tenders have been awarded yet.</p>
+                <div className="no-tenders-message bg-gray-100 p-4 rounded text-center">
+                    No tenders have been awarded yet.
+                </div>
             ) : (
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Title</th>
-                            <th>Deadline</th>
-                            <th>Awarded To</th>
-                            <th>Bid Amount</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {awardedTenders.map(tender => {
-                            const awardedBidder = tender.bidders.find(bidder => bidder.id === tender.awardedTo);
-                            return (
-                                <tr key={tender.id}>
-                                    <td>{tender.id}</td>
-                                    <td>{tender.title}</td>
-                                    <td>{tender.deadline}</td>
-                                    <td>{awardedBidder ? awardedBidder.name : "N/A"}</td>
-                                    <td>${awardedBidder ? awardedBidder.bid.toLocaleString() : "N/A"}</td>
-                                    <td>
-                                        <Link to={`/tender/${tender.id}`} className="btn btn-view">View</Link>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200">
+                        <thead className="bg-gray-100">
+                            <tr>
+                                <th className="py-3 px-4 border-b text-left">ID</th>
+                                <th className="py-3 px-4 border-b text-left">Title</th>
+                                <th className="py-3 px-4 border-b text-left">Deadline</th>
+                                <th className="py-3 px-4 border-b text-left">Status</th>
+                                <th className="py-3 px-4 border-b text-left">Awarded To</th>
+                                <th className="py-3 px-4 border-b text-left">Bid Amount</th>
+                                <th className="py-3 px-4 border-b text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {awardedTenders.map(tender => {
+                                const awardedBidder = tender.bidders && tender.bidders.find ?
+                                    tender.bidders.find(bidder => bidder.id === tender.awardedTo) : null;
+                                return (
+                                    <tr key={tender.id} className="hover:bg-gray-50">
+                                        <td className="py-2 px-4 border-b">{tender.id}</td>
+                                        <td className="py-2 px-4 border-b">{tender.title}</td>
+                                        <td className="py-2 px-4 border-b">{tender.deadline}</td>
+                                        <td className="py-2 px-4 border-b">
+                                            <StatusBadge status={tender.status == "Closed" ? "Awarded" : "Closed"} />
+                                        </td>
+                                        <td className="py-2 px-4 border-b">{awardedBidder ? awardedBidder.name : "N/A"}</td>
+                                        <td className="py-2 px-4 border-b">${awardedBidder ? awardedBidder.bid.toLocaleString() : "N/A"}</td>
+                                        <td className="py-2 px-4 border-b">
+                                            <Link
+                                                to={`/tender/${tender.id}`}
+                                                className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-sm"
+                                            >
+                                                View
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </div>
     );
