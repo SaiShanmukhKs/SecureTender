@@ -1,4 +1,9 @@
+# Ignore artifacts folder
 artifacts/
+
+# Ignore logs folder and log files
 logs/
 logs/*.log
-**/*/node_modules
+
+# Ignore all node_modules directories, at any level
+**/node_modules/
