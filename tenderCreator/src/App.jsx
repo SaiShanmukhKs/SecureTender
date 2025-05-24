@@ -16,11 +16,14 @@ import SubmitBid from './pages/bidder/SubmitBid';
 import { BlockchainTenderingProvider } from './context/ContractContext.jsx';
 import TNavbar from './components/TNavbar.jsx';
 import BNavbar from './components/BNavbar.jsx';
+import Error from './pages/Error.jsx';
 
 const App = () => {
-  const token = localStorage.getItem('token');
+  let token = localStorage.getItem('userData');
+  token = token ? JSON.parse(token).token : null;
   const decodedToken = token ? jwtDecode(token) : null;
-  const role = decodedToken ? decodedToken.role : null;
+  const role = decodedToken ? decodedToken.userResponse.role : null;
+  console.log(role);
 
   return (
     <Router>
@@ -47,7 +50,7 @@ const App = () => {
             <BNavbar />
             <div className="content">
               <Routes>
-                <Route path="/" element={<BDashboard />} />
+                <Route path="/dashboard" element={<BDashboard />} />
                 <Route path="/tenders" element={<AvailableTenders />} />
                 <Route path="/tender/:id" element={<TenderDetail />} />
                 <Route path="/my-bids" element={<MyBids />} />
