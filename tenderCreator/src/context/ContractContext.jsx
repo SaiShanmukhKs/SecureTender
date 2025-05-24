@@ -193,7 +193,8 @@ export const BlockchainTenderingProvider = ({ children }) => {
             console.log("Fetching active tenders...");
             return await contract.methods.getActiveTenders().call();
         },
-        getAwardedTenders: async () => {
+
+        getAwardedTenders: async (address) => {
             return await contract.methods.getAwardedTenders().call();
         },
 
@@ -213,8 +214,8 @@ export const BlockchainTenderingProvider = ({ children }) => {
             return await contract.methods.getBidderRating(bidderId).call();
         },
 
-        getBidderBids: async (bidderId) => {
-            return await contract.methods.getBidsByBidder(bidderId).call();
+        getBidderBids: async (bidderAddress) => {
+            return await contract.methods.getBidsByBidder(bidderAddress).call();
         },
 
         getTenderCreatorTenders: async (tenderCreatorId) => {

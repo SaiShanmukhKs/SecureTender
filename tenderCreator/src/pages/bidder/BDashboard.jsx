@@ -1,14 +1,18 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { use, useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BidderContext } from '../../context/BidderContext';
+import { useBlockchainTendering } from '../../context/ContractContext';
 
 function BDashboard() {
-    const { tenders, myBids, profile, fetchTenders, fetchMyBids, fetchProfile, isLoading, error } = useContext(BidderContext);
+    const blockchain = useBlockchainTendering();
+    // const { tenders, myBids, profile, fetchTenders, fetchMyBids, fetchProfile, isLoading, error } = useContext(BidderContext);
     const [dashboardStats, setDashboardStats] = useState({
         openTenders: 0,
         submittedBids: 0,
         awardedBids: 0
     });
+    const [tenders, setTenders] = useState([]);
+    const [myBids, setMyBids] = useState([]);
     const [recommendedTenders, setRecommendedTenders] = useState([]);
     const [isInitialized, setIsInitialized] = useState(false);
 
@@ -29,6 +33,31 @@ function BDashboard() {
 
         loadDashboardData();
     }, [fetchTenders, fetchMyBids, fetchProfile]);
+
+    useEffect(() => {
+        const fetchTendersData = async () => {
+            try {
+                const allTenders = await blockchain.getActiveTenders();
+                setTenders(allTenders);
+            } catch (err) {
+                console.error("Error fetching tenders:", err);
+            }
+        }
+
+        const myBidsData = async () => {
+            try {
+                let token = localStorage.getItem('userData');
+                token = token ? JSON.parse(token).token : null;
+                const decodedToken = token ? jwtDecode(token) : null;
+                const address = decodedToken ? decodedToken.userResponse.address : null;
+                console.log("Bidder Address", address);
+                const bids = await blockchain.getBidderBids(address);
+                setMyBids(bids);
+            } catch (err) {
+                console.error("Error fetching my bids:", err);
+            }
+        }
+    },[])
 
     // Calculate dashboard statistics when data changes
     useEffect(() => {
