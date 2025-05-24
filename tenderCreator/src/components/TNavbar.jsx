@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Navbar = () => {
+const TNavbar = () => {
     return (
         <nav className="navbar">
             <div className="navbar-brand">Tender Management System</div>
@@ -15,4 +15,4 @@ const Navbar = () => {
     );
 };
 
-export default Navbar;
+export default TNavbar;

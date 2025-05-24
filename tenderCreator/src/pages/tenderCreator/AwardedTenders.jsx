@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { TenderContext } from '../context/TenderContext';
+import { TenderContext } from '../../context/TenderContext';
 
 const AwardedTenders = () => {
     const { tenders } = useContext(TenderContext);

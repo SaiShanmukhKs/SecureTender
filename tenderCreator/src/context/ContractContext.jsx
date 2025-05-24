@@ -126,13 +126,14 @@ export const BlockchainTenderingProvider = ({ children }) => {
         },
 
         // Bidding functions
-        placeBid: async (tenderId, bidDetails, amount, paymentAmount) => {
-            const value = web3.utils.toWei(paymentAmount.toString(), 'ether');
+        placeBid: async (tenderId, bidDetails, amount) => {
+            const value = web3.utils.toWei(amount.toString(), 'ether');
             const txOptions = await getTxOptions();
-            return await contract.methods.placeBid(tenderId, bidDetails, amount).send({
-                ...txOptions,
-                value: value
-            });
+            console.log("Placing bid with value:", value);
+            console.log("Transaction options:", txOptions);
+            console.log("Bid details:", bidDetails);
+            console.log("Tender ID:", tenderId);
+            return await contract.methods.placeBid(tenderId, bidDetails, value).send(txOptions);
         },
 
         approveBid: async (tenderId, bidId) => {
@@ -178,6 +179,7 @@ export const BlockchainTenderingProvider = ({ children }) => {
 
         // View functions
         getActiveTenders: async () => {
+            console.log("Fetching active tenders...");
             return await contract.methods.getActiveTenders().call();
         },
 
@@ -198,7 +200,7 @@ export const BlockchainTenderingProvider = ({ children }) => {
         },
 
         getBidderBids: async (bidderId) => {
-            return await contract.methods.getBidderBids(bidderId).call();
+            return await contract.methods.getBidsByBidder(bidderId).call();
         },
 
         getTenderCreatorTenders: async (tenderCreatorId) => {

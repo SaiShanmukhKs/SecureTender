@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-function Navbar() {
+function BNavbar() {
     return (
         <nav className="navbar">
             <div className="navbar-brand">Tender Bidding Portal</div>
@@ -15,4 +15,4 @@ function Navbar() {
     );
 }
 
-export default Navbar;
+export default BNavbar;

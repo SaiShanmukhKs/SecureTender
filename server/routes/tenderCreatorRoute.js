@@ -9,13 +9,10 @@ import {
   updateProfile,
   deleteProfile,
 } from "./userController.js";
+import Bidder from "../models/bidderSchema.js";
 
 const router = express.Router();
 
-router.post("/register", (req, res) => registerUser(TenderCreator, req, res));
-router.post("/login", (req, res) =>
-  loginUser(TenderCreator, "tenderCreator", req, res)
-);
 router.get("/profile", authenticateToken, (req, res) =>
   getProfile(TenderCreator, req, res)
 );
@@ -41,8 +38,14 @@ router.post("/rate/:bidderId", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Bidder not found" });
     }
 
-    bidder.ratings = bidder.ratings || [];
-    bidder.ratings.push({ value: rating, by: req.user.id });
+    const newRating =
+      (bidder.rating * bidder.tendersCompeted + rating) /
+      (bidder.tendersCompeted + 1);
+    bidder.rating = newRating;
+    bidder.tendersCompeted = (bidder.tendersCompeted || 0) + 1;
+
+    bidder.rating = bidder.rating || [];
+    bidder.rating.push({ value: rating, by: req.user.id });
     await bidder.save();
 
     res.status(200).json({ message: "Bidder rated successfully" });

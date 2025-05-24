@@ -128,6 +128,36 @@ contract BlockchainTendering {
         return activeTenders;
     }
 
+    // Function to get the Awarded Tenders
+    function getAwardedTenders(address _tenderCreator) external view returns (Tender[] memory) {
+        uint awardedCount = 0;
+        
+        // Count awarded tenders for this creator
+        for(uint i = 1; i <= tenderCount; i++) {
+            if(tenders[i].createdBy == _tenderCreator && 
+            tenders[i].tenderStatus == TenderStatus.Closed && 
+            tenders[i].winner != address(0)) {
+                awardedCount++;
+            }
+        }
+        
+        // Create result array
+        Tender[] memory awardedTenders = new Tender[](awardedCount);
+        uint currentIndex = 0;
+        
+        // Fill result array
+        for(uint i = 1; i <= tenderCount; i++) {
+            if(tenders[i].createdBy == _tenderCreator && 
+            tenders[i].tenderStatus == TenderStatus.Closed && 
+            tenders[i].winner != address(0)) {
+                awardedTenders[currentIndex] = tenders[i];
+                currentIndex++;
+            }
+        }
+        
+        return awardedTenders;
+    }
+
     function getTenderDetails(uint _tenderId) external view returns (Tender memory) {
         Tender storage tender = tenders[_tenderId];
 

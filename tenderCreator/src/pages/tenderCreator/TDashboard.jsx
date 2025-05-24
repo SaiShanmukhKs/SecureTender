@@ -1,10 +1,10 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { TenderContext } from '../context/TenderContext';
-import StatCard from '../components/StatCard';
-import StatusBadge from '../components/StatusBadge';
+import { TenderContext } from '../../context/TenderContext';
+import StatCard from '../../components/StatCard';
+import StatusBadge from '../../components/StatusBadge';
 
-const Dashboard = () => {
+const TDashboard = () => {
     const { tenders } = useContext(TenderContext);
 
     const openTenders = tenders.filter(tender => tender.status === "Open").length;
@@ -65,4 +65,4 @@ const Dashboard = () => {
     );
 };
 
-export default Dashboard;
+export default TDashboard;

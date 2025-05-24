@@ -18,8 +18,9 @@ export const registerUser = async (Model, req, res) => {
 
     const hashedPassword = await bcrypt.hash(
       password,
-      process.env.SALT_ROUNDS || 10
+      Number(process.env.SALT_ROUNDS) || 10
     );
+
     const newUser = new Model({
       name,
       email,
@@ -29,9 +30,23 @@ export const registerUser = async (Model, req, res) => {
     });
 
     await newUser.save();
-    res
-      .status(201)
-      .json({ message: `${Model.modelName} registered successfully` });
+
+    const userResponse = {
+      id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      address: newUser.walletAddress,
+      role: newUser.role,
+    };
+
+    const token = jwt.sign({ userResponse }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.status(201).json({
+      token,
+      message: `${Model.modelName} registered successfully`,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -60,15 +75,15 @@ export const loginUser = async (Model, role, req, res) => {
       expiresIn: "1h",
     });
 
+    const userResponse = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      address: user.walletAddress,
+    };
+
     res.status(200).json({
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        companyName: user.companyName,
-        walletAddress: user.walletAddress,
-      },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

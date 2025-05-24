@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useBlockchainTendering } from '../context/ContractContext';
-import StatusBadge from '../components/StatusBadge';
+import { useBlockchainTendering } from '../../context/ContractContext';
+import StatusBadge from '../../components/StatusBadge';
 
 const AllTenders = () => {
     const [tenders, setTenders] = useState([]);

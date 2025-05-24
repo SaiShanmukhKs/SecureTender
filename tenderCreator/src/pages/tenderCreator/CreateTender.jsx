@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TenderContext } from '../context/TenderContext';
-import { useBlockchainTendering } from '../context/ContractContext';
+import { TenderContext } from '../../context/TenderContext';
+import { useBlockchainTendering } from '../../context/ContractContext';
 
 const CreateTender = () => {
     const { addTender } = useContext(TenderContext);
