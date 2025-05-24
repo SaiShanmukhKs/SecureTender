@@ -4,9 +4,9 @@ import jwt from "jsonwebtoken";
 
 // Registers any user model (Bidder or TenderCreator)
 export const registerUser = async (Model, req, res) => {
-  const { name, email, password, walletAddress, companyName } = req.body;
+  const { name, email, password, walletAddress, companyName, role } = req.body;
 
-  if (!name || !email || !password || !walletAddress || !companyName) {
+  if (!name || !email || !password || !walletAddress || !companyName || !role) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
@@ -36,7 +36,7 @@ export const registerUser = async (Model, req, res) => {
       name: newUser.name,
       email: newUser.email,
       address: newUser.walletAddress,
-      role: newUser.role,
+      role: role,
     };
     console.log("User registered:", userResponse);
     const token = jwt.sign({ userResponse }, process.env.JWT_SECRET, {
