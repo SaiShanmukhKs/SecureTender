@@ -1,3 +1,4 @@
+// Bidder Context.jsx
 import React, { useState, useEffect, createContext } from 'react';
 
 // Create context
@@ -7,8 +8,6 @@ export const BidderContext = createContext();
 const API_BASE_URL = 'http://localhost:3000';
 
 export function BidderProvider({ children }) {
-    const [tenders, setTenders] = useState([]);
-    const [myBids, setMyBids] = useState([]);
     const [profile, setProfile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);

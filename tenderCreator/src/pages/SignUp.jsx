@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Web3 from 'web3';
 import './SignUp.css';
@@ -18,6 +18,14 @@ export default function SignUp() {
     });
     const [error, setError] = useState('');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        let token = localStorage.getItem('userData');
+        token = token ? JSON.parse(token).token : null;
+        if (token) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -82,8 +90,8 @@ export default function SignUp() {
             localStorage.setItem('userData', JSON.stringify(res.data));
             navigate('/dashboard');
         } catch (err) {
-            console.error(err);
-            setError(err.response?.data?.message || 'An error occurred');
+            console.error(err.response.data.error);
+            setError(err.response?.data?.error || 'An error occurred');
         }
     };
 
@@ -149,15 +157,7 @@ export default function SignUp() {
                                 placeholder="Wallet Private Key"
                             />
 
-                            {/* Alert box for private key status */}
-                            {error === 'Invalid private key' && (
-                                <div className="alert-box error">
-                                    {error}
-                                </div>
-                            )}
-                            {error && error !== 'Invalid private key' && (
-                                <div className="alert-box error">{error}</div>
-                            )}
+
                             {data.privateKey && error === '' && data.address && (
                                 <div className="alert-box success">
                                     Address: {data.address}
@@ -174,6 +174,11 @@ export default function SignUp() {
                             <option value="bidder">Bidder</option>
                             <option value="Tender Creator">Tender Creator</option>
                         </select>
+                    )}
+                    {error && (
+                        <div className="alert-box error">
+                            {error}
+                        </div>
                     )}
                     <button
                         type="submit"

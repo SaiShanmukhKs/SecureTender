@@ -16,15 +16,10 @@ export const registerUser = async (Model, req, res) => {
       return res.status(409).json({ error: "Email already in use" });
     }
 
-    const hashedPassword = await bcrypt.hash(
-      password,
-      Number(process.env.SALT_ROUNDS) || 10
-    );
-
     const newUser = new Model({
       name,
       email,
-      password: hashedPassword,
+      password,
       walletAddress,
       companyName,
     });
@@ -65,6 +60,7 @@ export const loginUser = async (Model, role, req, res) => {
     if (!user) {
       return res.status(404).json({ error: `${Model.modelName} not found` });
     }
+    console.log("User found:", user);
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {

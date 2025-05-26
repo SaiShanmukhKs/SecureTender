@@ -45,6 +45,7 @@ app.post("/api/register", (req, res) => {
 
 app.post("/api/login", (req, res) => {
   const { email, password, role } = req.body;
+  console.log("Logging in user with data:", req.body);
 
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });

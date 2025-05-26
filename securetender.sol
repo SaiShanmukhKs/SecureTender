@@ -294,8 +294,7 @@ contract BlockchainTendering {
         
         // Create an array to hold the actual Bid objects
         Bid[] memory bidderBids = new Bid[](bidderBidIds.length);
-        
-        // Populate the array with full Bid objects by referencing each ID
+                // Populate the array with full Bid objects by referencing each ID
         for (uint i = 0; i < bidderBidIds.length; i++) {
             bidderBids[i] = bids[bidderBidIds[i]];
         }
