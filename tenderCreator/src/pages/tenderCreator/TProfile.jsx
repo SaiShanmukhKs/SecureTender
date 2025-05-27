@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
-function BidderProfile() {
+function TProfile() {
     const [profile, setProfile] = useState(null);
     const [editMode, setEditMode] = useState(false);
     const [formData, setFormData] = useState({});
@@ -34,7 +34,7 @@ function BidderProfile() {
                 throw new Error("No auth token found");
             }
 
-            const response = await axios.get(`${API_BASE_URL}/api/bidder/profile`, {
+            const response = await axios.get(`${API_BASE_URL}/api/tendercreator/profile`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -42,6 +42,7 @@ function BidderProfile() {
             });
 
             setProfile(response.data);
+            console.log("Fetched profile data:", response.data);
             setFormData({ ...response.data });
         } catch (error) {
             console.error("Error fetching profile:", error);
@@ -62,7 +63,7 @@ function BidderProfile() {
             console.log("Updating profile with data:", updatedData);
             console.log("Using token:", token);
 
-            const response = await axios.put(`${API_BASE_URL}/api/bidder/profile`, updatedData, {
+            const response = await axios.put(`${API_BASE_URL}/api/tendercreator/profile`, updatedData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -285,4 +286,4 @@ function BidderProfile() {
     );
 }
 
-export default BidderProfile;
+export default TProfile;

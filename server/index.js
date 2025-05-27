@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 connectToDb();
 
 app.use("/api/bidder", bidderRoutes);
-app.use("/api/tender-creator", tenderCreatorRoutes);
+app.use("/api/tendercreator", tenderCreatorRoutes);
 
 // Default Route
 app.get("/", (req, res) => {
@@ -34,9 +34,9 @@ app.post("/api/register", (req, res) => {
   if (!name || !email || !password || !walletAddress || !companyName) {
     return res.status(400).json({ error: "All fields are required" });
   }
-  if (role !== "bidder" && role !== "tenderCreator") {
+  if (role !== "bidder" && role !== "Tender Creator") {
     return res.status(400).json({ error: "Invalid role" });
-  } else if (role === "tenderCreator") {
+  } else if (role === "Tender Creator") {
     registerUser(TenderCreator, req, res);
   } else {
     registerUser(Bidder, req, res);

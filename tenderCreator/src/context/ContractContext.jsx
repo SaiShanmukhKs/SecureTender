@@ -219,8 +219,8 @@ export const BlockchainTenderingProvider = ({ children }) => {
             return await contract.methods.getBidsByBidder(bidderAddress).call();
         },
 
-        getTenderCreatorTenders: async (tenderCreatorId) => {
-            return await contract.methods.getTenderCreatorTenders(tenderCreatorId).call();
+        getTendersByCreator: async (tenderCreatorId) => {
+            return await contract.methods.getTendersByCreator(tenderCreatorId).call();
         },
 
         isTenderActive: async (tenderId) => {

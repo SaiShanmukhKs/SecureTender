@@ -168,6 +168,15 @@ h2 {
   background-color: #7f8c8d;
 }
 
+.btn-logout {
+  background-color: #e74c3c;
+  border-radius: 40px;
+}
+
+.btn-logout:hover {
+  background-color: #c0392b;
+}
+
 .btn-secondary:hover {
   background-color: #6c7a7d;
 }
@@ -536,6 +545,14 @@ tr:not(:last-child) {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.corner-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 

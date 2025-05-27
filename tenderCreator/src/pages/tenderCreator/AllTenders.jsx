@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBlockchainTendering } from '../../context/ContractContext';
 import StatusBadge from '../../components/StatusBadge';
+import { jwtDecode } from 'jwt-decode';
 
 const AllTenders = () => {
     const [tenders, setTenders] = useState([]);
@@ -9,12 +10,17 @@ const AllTenders = () => {
     const [error, setError] = useState(null);
     const blockchain = useBlockchainTendering();
 
+    const token = localStorage.getItem('userData');
+    const decodedToken = token ? jwtDecode(token) : null;
+    const address = decodedToken ? decodedToken.userResponse.address : null;
+
     useEffect(() => {
         const fetchTenders = async () => {
             try {
                 setLoading(true);
                 // Get all active tenders from the blockchain
-                const activeTenders = await blockchain.getActiveTenders();
+                // const activeTenders = await blockchain.getActiveTenders();
+                const activeTenders = await blockchain.getTendersByCreator(address);
                 console.log(activeTenders);
 
                 // Format the tender data based on the actual return structure
@@ -62,7 +68,7 @@ const AllTenders = () => {
         if (blockchain.account) {
             fetchTenders();
         }
-    }, [blockchain.account]);
+    }, [blockchain, address, blockchain.account]);
 
     if (loading) {
         return <div className="loading">Loading tenders...</div>;

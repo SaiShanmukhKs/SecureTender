@@ -54,4 +54,22 @@ router.post("/rate/:bidderId", authenticateToken, async (req, res) => {
   }
 });
 
+// Update tender count
+router.put("/update-tendercount", authenticateToken, async (req, res) => {
+  try {
+    console.log("Req", req.body.userId)
+    const tenderCreator = await TenderCreator.findById(req.body.userId);
+    if (!tenderCreator) {
+      return res.status(404).json({ error: "Tender Creator not found" });
+    }
+
+    tenderCreator.tendersCreated = (tenderCreator.tendersCreated || 0) + 1;
+    await tenderCreator.save();
+
+    res.status(200).json({ message: "Tender count updated successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

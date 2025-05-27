@@ -16,6 +16,7 @@ import Error from './pages/Error';
 import { BlockchainTenderingProvider } from './context/ContractContext.jsx';
 import TNavbar from './components/TNavbar.jsx';
 import BNavbar from './components/BNavbar.jsx';
+import TProfile from './pages/tenderCreator/TProfile.jsx';
 
 const App = () => {
   let token = localStorage.getItem('userData');
@@ -30,13 +31,14 @@ const App = () => {
         <Routes>
 
           {/* Tender Creator Routes */}
-          {role === 'tenderCreator' && (
+          {role === 'Tender Creator' && (
             <>
               <Route path="/dashboard" element={<WithTNavbar><TDashboard /></WithTNavbar>} />
               <Route path="/create" element={<WithTNavbar><CreateTender /></WithTNavbar>} />
               <Route path="/all-tenders" element={<WithTNavbar><AllTenders /></WithTNavbar>} />
               <Route path="/awarded-tenders" element={<WithTNavbar><AwardedTenders /></WithTNavbar>} />
               <Route path="/tender/:id" element={<WithTNavbar><TenderDetail /></WithTNavbar>} />
+              <Route path="/profile" element={<WithTNavbar><TProfile /></WithTNavbar>} />
             </>
           )}
 

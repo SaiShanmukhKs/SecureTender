@@ -10,6 +10,7 @@ const TNavbar = () => {
                 <li><Link to="/create">Create Tender</Link></li>
                 <li><Link to="/all-tenders">All Tenders</Link></li>
                 <li><Link to="/awarded-tenders">Awarded Tenders</Link></li>
+                <li><Link to="/profile">Profile</Link></li>
             </ul>
         </nav>
     );

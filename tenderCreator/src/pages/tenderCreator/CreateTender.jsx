@@ -2,9 +2,12 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TenderContext } from '../../context/TenderContext';
 import { useBlockchainTendering } from '../../context/ContractContext';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 const CreateTender = () => {
-    const { addTender } = useContext(TenderContext);
     const { createTender, toWei } = useBlockchainTendering();
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,6 +21,12 @@ const CreateTender = () => {
         registrationFee: "",
         moneyDispersalPhases: ""
     });
+
+    const getAuthToken = () => {
+        const userData = localStorage.getItem('userData');
+        console.log("User Data:", userData);
+        return userData ? JSON.parse(userData).token : null;
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -69,12 +78,26 @@ const CreateTender = () => {
 
             console.log("Transaction result:", result);
 
-            // Add to local context if needed
-            // addTender({
-            //     ...tender,
-            //     startDate: startTimestamp,
-            //     endDate: endTimestamp
-            // });
+            // Update tender count in the Tender Creator profile
+            // /update-tendercount
+
+            const token = getAuthToken();
+            if (!token) {
+                throw new Error("No auth token found");
+            }
+
+            const decodedToken = token ? jwtDecode(localStorage.getItem('userData')) : null;
+            console.log("Decoded Token:", decodedToken);
+            const userId = decodedToken ? decodedToken.userResponse.id : null;
+            console.log("User ID:", userId);
+
+            const response = await axios.put(`${API_BASE_URL}/api/tendercreator/update-tendercount`, {userId: userId}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log("Tender count updated successfully");
 
             navigate("/all-tenders");
         } catch (error) {
