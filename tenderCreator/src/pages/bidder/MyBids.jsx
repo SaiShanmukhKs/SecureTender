@@ -35,7 +35,7 @@ function MyBids() {
             }
 
             // Get all bid IDs for the current user using the contract function
-            const myBids = await blockchain.getBidderBids(userAddress);
+            const myBids = await blockchain.getBidsByBidder(userAddress);
             console.log("Bid IDs:", myBids);
             const userBids = [];
 

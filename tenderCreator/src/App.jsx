@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import TenderDetail from './pages/TenderDetail';
 import SignUp from './pages/SignUp';
 import { jwtDecode } from "jwt-decode";

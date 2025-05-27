@@ -87,24 +87,28 @@ export const loginUser = async (Model, role, req, res) => {
 };
 
 export const getProfile = async (Model, req, res) => {
+
+  req = req.user.userResponse || req;
+  console.log("Fetching profile for user ID:", req);
   try {
-    const user = await Model.findById(req.user.id).select("-password");
+    const user = await Model.findById(req.id).select("-password");
     if (!user) {
       return res.status(404).json({ error: `${Model.modelName} not found` });
     }
 
     res.status(200).json(user);
   } catch (error) {
+    console.error("Error fetching profile:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
 export const updateProfile = async (Model, req, res) => {
-  const { name, email, walletAddress, companyName } = req.body;
-
+  const { _id, name, email, walletAddress, companyName } = req.body;
+  console.log("Updating profile for user ID:", req.body);
   try {
     const updatedUser = await Model.findByIdAndUpdate(
-      req.user.id,
+      _id || req.body._id,
       { name, email, walletAddress, companyName },
       { new: true }
     ).select("-password");

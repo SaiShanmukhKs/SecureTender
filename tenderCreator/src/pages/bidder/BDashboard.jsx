@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
 import { useBlockchainTendering } from '../../context/ContractContext';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 function BDashboard() {
     const blockchain = useBlockchainTendering();
@@ -45,7 +45,7 @@ function BDashboard() {
             const token = getAuthToken();
             if (!token) throw new Error("No auth token found");
 
-            const response = await fetch(`${API_BASE_URL}/bidder/profile`, {
+            const response = await fetch(`${API_BASE_URL}/api/bidder/profile`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -80,7 +80,7 @@ function BDashboard() {
                 status: tender.tenderStatus === 1 ? "Open" : "Closed"
             }));
 
-            setTenders(transformedTenders);
+            
             return transformedTenders;
         } catch (error) {
             console.error("Error fetching tenders:", error);
@@ -106,7 +106,6 @@ function BDashboard() {
                 status: bid.status === 0 ? "Submitted" : bid.status === 1 ? "Awarded" : "Rejected"
             }));
 
-            setMyBids(transformedBids);
             return transformedBids;
         } catch (error) {
             console.error("Error fetching my bids:", error);
@@ -127,8 +126,9 @@ function BDashboard() {
                     fetchTendersData(),
                     fetchMyBidsData()
                 ]);
-
+                setTenders(tendersData);
                 setProfile(profileData);
+                setMyBids(bidsData);
 
                 // Data is already set by individual functions, but we can use the returned data here if needed
                 console.log("Dashboard initialized successfully");
@@ -202,7 +202,7 @@ function BDashboard() {
         <div className="dashboard">
             <h1>Welcome, {profile.name}</h1>
             <p className="subtitle">
-                Your current rating:
+                Your current rating: 
                 <span className="rating">
                     {profile.rating !== -1 ? `${profile.rating.toFixed(1)}/5` : 'Not rated yet'}
                 </span>

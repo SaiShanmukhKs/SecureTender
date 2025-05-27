@@ -1,23 +1,80 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { BidderContext } from '../../context/BidderContext';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 function BidderProfile() {
-    const { profile, updateProfile, fetchProfile, isLoading, error } = useContext(BidderContext);
+    const [profile, setProfile] = useState(null);
     const [editMode, setEditMode] = useState(false);
     const [formData, setFormData] = useState({});
     const [updateStatus, setUpdateStatus] = useState({ success: false, message: '' });
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Helper function to get auth token
+    const getAuthToken = () => {
+        const userData = localStorage.getItem('userData');
+        return userData ? JSON.parse(userData).token : null;
+    };
+
+    // Fetch profile from backend API
+    const fetchProfile = React.useCallback(async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            
+            const token = getAuthToken();
+            if (!token) {
+                throw new Error("No auth token found");
+            }
+
+            const response = await axios.get(`${API_BASE_URL}/api/bidder/profile`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            setProfile(response.data);
+            setFormData({ ...response.data });
+        } catch (error) {
+            console.error("Error fetching profile:", error);
+            setError(error.response?.data?.error || error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // Update profile via backend API
+    const updateProfile = async (updatedData) => {
+        try {
+            const token = getAuthToken();
+            if (!token) {
+                throw new Error("No auth token found");
+            }
+
+            console.log("Updating profile with data:", updatedData);
+            console.log("Using token:", token);
+
+            const response = await axios.put(`${API_BASE_URL}/api/bidder/profile`, updatedData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            setProfile(response.data);
+            return true;
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            throw new Error(error.response?.data?.error || error.message);
+        }
+    };
 
     // Fetch profile data when component mounts
     useEffect(() => {
         fetchProfile();
     }, [fetchProfile]);
-
-    // Update form data when profile changes
-    useEffect(() => {
-        if (profile) {
-            setFormData({ ...profile });
-        }
-    }, [profile]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -30,17 +87,16 @@ function BidderProfile() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setUpdateStatus({ success: false, message: '' });
+        setIsLoading(true);
 
         try {
-            const result = await updateProfile(formData);
-            if (result) {
-                setUpdateStatus({ success: true, message: 'Profile updated successfully!' });
-                setEditMode(false);
-            } else {
-                setUpdateStatus({ success: false, message: 'Failed to update profile.' });
-            }
+            await updateProfile(formData);
+            setUpdateStatus({ success: true, message: 'Profile updated successfully!' });
+            setEditMode(false);
         } catch (err) {
             setUpdateStatus({ success: false, message: `Error: ${err.message}` });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -71,15 +127,18 @@ function BidderProfile() {
                     <div className="profile-header">
                         <div className="profile-main">
                             <h2>{profile.name}</h2>
-                            <p className="registration-number">Registration: {profile.registrationNumber}</p>
-                            <div className="rating-display">
-                                <span className="rating">{profile.rating.toFixed(1)}</span>
-                                <div className="stars">
-                                    {[...Array(5)].map((_, i) => (
-                                        <span key={i} className={i < Math.round(profile.rating) ? "star filled" : "star"}>★</span>
-                                    ))}
+                            <p className="registration-number">Company: {profile.companyName}</p>
+                            <p className="wallet-address">Wallet: {profile.walletAddress}</p>
+                            {profile.rating && profile.rating !== -1 && (
+                                <div className="rating-display">
+                                    <span className="rating">{profile.rating.toFixed(1)}</span>
+                                    <div className="stars">
+                                        {[...Array(5)].map((_, i) => (
+                                            <span key={i} className={i < Math.round(profile.rating) ? "star filled" : "star"}>★</span>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                         <button onClick={() => setEditMode(true)} className="btn btn-secondary">
                             Edit Profile
@@ -95,43 +154,47 @@ function BidderProfile() {
                                     <span className="info-value">{profile.email}</span>
                                 </div>
                                 <div className="info-item">
-                                    <span className="info-label">Phone:</span>
-                                    <span className="info-value">{profile.phone}</span>
+                                    <span className="info-label">Company Name:</span>
+                                    <span className="info-value">{profile.companyName}</span>
                                 </div>
                                 <div className="info-item">
-                                    <span className="info-label">Address:</span>
-                                    <span className="info-value">{profile.address}</span>
+                                    <span className="info-label">Wallet Address:</span>
+                                    <span className="info-value">{profile.walletAddress}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="profile-section">
-                            <h3>Business Categories</h3>
-                            <div className="categories-list">
-                                {profile.categories.map((category, index) => (
-                                    <span key={index} className="category-tag">{category}</span>
-                                ))}
+                        {profile.categories && profile.categories.length > 0 && (
+                            <div className="profile-section">
+                                <h3>Business Categories</h3>
+                                <div className="categories-list">
+                                    {profile.categories.map((category, index) => (
+                                        <span key={index} className="category-tag">{category}</span>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="profile-section">
-                            <h3>Documents</h3>
-                            <ul className="document-list">
-                                {profile.documents.map((doc, index) => (
-                                    <li key={index}>
-                                        <span className="document-icon">📄</span>
-                                        <span className="document-name">{doc}</span>
-                                        <button className="btn btn-sm">View</button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        {profile.documents && profile.documents.length > 0 && (
+                            <div className="profile-section">
+                                <h3>Documents</h3>
+                                <ul className="document-list">
+                                    {profile.documents.map((doc, index) => (
+                                        <li key={index}>
+                                            <span className="document-icon">📄</span>
+                                            <span className="document-name">{doc}</span>
+                                            <button className="btn btn-sm">View</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
                 </div>
             ) : (
                 <form className="profile-edit-form" onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label htmlFor="name">Company Name</label>
+                        <label htmlFor="name">Name</label>
                         <input
                             type="text"
                             id="name"
@@ -155,26 +218,27 @@ function BidderProfile() {
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="phone">Phone</label>
+                        <label htmlFor="companyName">Company Name</label>
                         <input
                             type="text"
-                            id="phone"
-                            name="phone"
-                            value={formData.phone || ''}
+                            id="companyName"
+                            name="companyName"
+                            value={formData.companyName || ''}
                             onChange={handleChange}
                             required
                         />
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="address">Address</label>
-                        <textarea
-                            id="address"
-                            name="address"
-                            value={formData.address || ''}
+                        <label htmlFor="walletAddress">Wallet Address</label>
+                        <input
+                            type="text"
+                            id="walletAddress"
+                            name="walletAddress"
+                            value={formData.walletAddress || ''}
                             onChange={handleChange}
                             required
-                        ></textarea>
+                        />
                     </div>
 
                     <div className="form-actions">
@@ -190,6 +254,7 @@ function BidderProfile() {
                             onClick={() => {
                                 setFormData({ ...profile });
                                 setEditMode(false);
+                                setUpdateStatus({ success: false, message: '' });
                             }}
                             className="btn btn-secondary"
                             disabled={isLoading}
@@ -198,6 +263,12 @@ function BidderProfile() {
                         </button>
                     </div>
                 </form>
+            )}
+
+            {isLoading && profile && (
+                <div className="loading-overlay">
+                    <div className="loading">Updating profile...</div>
+                </div>
             )}
         </div>
     );

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Web3 from 'web3';
 import { ABI, ADDRESS } from '../contract/Solidity'
@@ -195,7 +196,7 @@ export const BlockchainTenderingProvider = ({ children }) => {
         },
 
         getAwardedTenders: async (address) => {
-            return await contract.methods.getAwardedTenders().call();
+            return await contract.methods.getAwardedTenders(address).call();
         },
 
         getTenderDetails: async (tenderId) => {
@@ -214,7 +215,7 @@ export const BlockchainTenderingProvider = ({ children }) => {
             return await contract.methods.getBidderRating(bidderId).call();
         },
 
-        getBidderBids: async (bidderAddress) => {
+        getBidsByBidder: async (bidderAddress) => {
             return await contract.methods.getBidsByBidder(bidderAddress).call();
         },
 
