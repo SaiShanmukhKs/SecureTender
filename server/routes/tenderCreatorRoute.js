@@ -23,6 +23,33 @@ router.delete("/profile", authenticateToken, (req, res) =>
   deleteProfile(TenderCreator, req, res)
 );
 
+// Get Bidder Details by Wallet Address
+router.get("/bidderDetails", authenticateToken, async (req, res) => {
+  const { address } = req.query;
+  console.log("Address:", address);
+
+  if (!address) {
+    return res.status(400).json({ error: "Wallet address is required" });
+  }
+
+  try {
+    const bidder = await Bidder.findOne({ walletAddress: address });
+
+    if (!bidder) {
+      console.log("Bidder not found for address:", address);
+      return res.status(404).json({ error: "Bidder not found" });
+    }
+
+    res.status(200).json({
+      name: bidder.name,
+      rating: bidder.rating,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // Rate a bidder
 router.post("/rate/:bidderId", authenticateToken, async (req, res) => {
   const { rating } = req.body;

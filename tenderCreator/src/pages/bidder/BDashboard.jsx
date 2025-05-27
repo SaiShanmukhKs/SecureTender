@@ -30,6 +30,7 @@ function BDashboard() {
     const getUserAddress = () => {
         try {
             const token = getAuthToken();
+            console.log("Auth Token:", token);
             if (!token) return null;
             const decodedToken = jwtDecode(token);
             return decodedToken?.userResponse?.address || null;
@@ -145,7 +146,7 @@ function BDashboard() {
         if (blockchain.account) {
             initializeDashboard();
         }
-    }, [blockchain.account]);
+    }, [blockchain, blockchain.account]);
 
     // Calculate dashboard statistics when data changes
     useEffect(() => {

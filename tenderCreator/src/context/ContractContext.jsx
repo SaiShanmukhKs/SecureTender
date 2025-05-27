@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Web3 from 'web3';
 import { ABI, ADDRESS } from '../contract/Solidity'
+import { jwtDecode } from 'jwt-decode';
 
 // Create the context
 const BlockchainTenderingContext = createContext(null);
@@ -26,6 +27,14 @@ export const BlockchainTenderingProvider = ({ children }) => {
 
     // Initialize Web3 and contract
     useEffect(() => {
+
+        const token = localStorage.getItem('userData');
+        if (!token) {
+            console.error("No user data found in localStorage. Please log in.");
+        }
+        const decodedToken = token ? jwtDecode(token) : null;
+        const address = decodedToken ? decodedToken.userResponse.address : null;
+
         const initWeb3 = async () => {
             if (connectingInProgress) {
                 console.log("Connection already in progress. Please wait.");
@@ -47,6 +56,10 @@ export const BlockchainTenderingProvider = ({ children }) => {
 
                     setWeb3(web3Instance);
                     setContract(contractInstance);
+                    if (accounts.includes(address)) {
+                        console.log("Using address from token:", address);
+                        setAccount(address);
+                    }
                     setAccount(accounts[0]);
 
                     // Listen for account changes

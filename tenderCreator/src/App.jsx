@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
-import TenderDetail from './pages/TenderDetail';
 import SignUp from './pages/SignUp';
 import { jwtDecode } from "jwt-decode";
 import TDashboard from './pages/tenderCreator/TDashboard';
@@ -17,6 +16,8 @@ import { BlockchainTenderingProvider } from './context/ContractContext.jsx';
 import TNavbar from './components/TNavbar.jsx';
 import BNavbar from './components/BNavbar.jsx';
 import TProfile from './pages/tenderCreator/TProfile.jsx';
+import BTenderDetail from './pages/bidder/BTenderDetail.jsx';
+import TTenderDetail from './pages/tenderCreator/TTenderDetail.jsx';
 
 const App = () => {
   let token = localStorage.getItem('userData');
@@ -37,7 +38,7 @@ const App = () => {
               <Route path="/create" element={<WithTNavbar><CreateTender /></WithTNavbar>} />
               <Route path="/all-tenders" element={<WithTNavbar><AllTenders /></WithTNavbar>} />
               <Route path="/awarded-tenders" element={<WithTNavbar><AwardedTenders /></WithTNavbar>} />
-              <Route path="/tender/:id" element={<WithTNavbar><TenderDetail /></WithTNavbar>} />
+              <Route path="/tender/:id" element={<WithTNavbar><TTenderDetail /></WithTNavbar>} />
               <Route path="/profile" element={<WithTNavbar><TProfile /></WithTNavbar>} />
             </>
           )}
@@ -47,7 +48,7 @@ const App = () => {
             <>
               <Route path="/dashboard" element={<WithBNavbar><BDashboard /></WithBNavbar>} />
               <Route path="/tenders" element={<WithBNavbar><AvailableTenders /></WithBNavbar>} />
-              <Route path="/tender/:id" element={<WithBNavbar><TenderDetail /></WithBNavbar>} />
+              <Route path="/tender/:id" element={<WithBNavbar><BTenderDetail /></WithBNavbar>} />
               <Route path="/my-bids" element={<WithBNavbar><MyBids /></WithBNavbar>} />
               <Route path="/profile" element={<WithBNavbar><BidderProfile /></WithBNavbar>} />
               <Route path="/submit-bid/:id" element={<WithBNavbar><SubmitBid /></WithBNavbar>} />

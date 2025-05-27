@@ -51,10 +51,10 @@ app.post("/api/login", (req, res) => {
     return res.status(400).json({ error: "Email and password are required" });
   }
 
-  if (role === "tenderCreator") {
-    loginUser(TenderCreator, "tenderCreator", req, res);
+  if (role === "Tender Creator") {
+    loginUser(TenderCreator, role, req, res);
   } else if (role === "bidder") {
-    loginUser(Bidder, "bidder", req, res);
+    loginUser(Bidder, role, req, res);
   } else {
     return res.status(400).json({ error: "Invalid role" });
   }
