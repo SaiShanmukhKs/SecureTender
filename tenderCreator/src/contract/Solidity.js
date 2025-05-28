@@ -928,4 +928,4 @@ export const ABI = [
 	}
 ];
 
-export const ADDRESS = "0x19d82601c6E83ED44A130D93A6b9Abd5A9Bd9fe6";
+export const ADDRESS = "0x0e6Fb24668982ec7f251cc7434b7304FDEef35f6";
