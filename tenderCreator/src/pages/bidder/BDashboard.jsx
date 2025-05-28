@@ -69,6 +69,7 @@ function BDashboard() {
     const fetchTendersData = async () => {
         try {
             const allTenders = await blockchain.getActiveTenders();
+            // console.log("Fetched tenders from blockchain:", allTenders[0].tenderStatus);
 
             // Transform blockchain data to match expected format
             const transformedTenders = allTenders.map(tender => ({
@@ -78,10 +79,11 @@ function BDashboard() {
                 createdBy: tender.createdBy,
                 deadline: new Date(Number(tender.endDate) * 1000).toLocaleDateString(),
                 estimatedBudget: blockchain.fromWei(tender.tenderFee),
-                status: tender.tenderStatus === 1 ? "Open" : "Closed"
+                status: (typeof tender.tenderStatus === 'bigint' ? 
+                    Number(tender.tenderStatus) : tender.tenderStatus) === 1 ? "Open" : "Closed"
             }));
 
-            
+            console.log("Transformed tenders:", transformedTenders);
             return transformedTenders;
         } catch (error) {
             console.error("Error fetching tenders:", error);
@@ -96,16 +98,21 @@ function BDashboard() {
             if (!userAddress) throw new Error("User address not found");
 
             const bids = await blockchain.getBidsByBidder(userAddress);
+            console.log("Fetched bids from blockchain:", bids);
 
             // Transform blockchain bid data
-            const transformedBids = bids.map(bid => ({
-                id: bid.bidId,
-                tenderId: bid.tenderId,
-                tenderTitle: `Tender #${bid.tenderId}`, // You might want to fetch actual tender titles
-                bidAmount: Number(blockchain.fromWei(bid.amount)),
-                submissionDate: new Date(Number(bid.issueDate) * 1000).toLocaleDateString(),
-                status: bid.status === 0 ? "Submitted" : bid.status === 1 ? "Awarded" : "Rejected"
-            }));
+            const transformedBids = bids.map(bid => {
+
+                const statusValue = typeof bid.status === 'bigint' ? Number(bid.status) : bid.status;
+                 return {
+                    id: bid.bidId,
+                    tenderId: bid.tenderId,
+                    tenderTitle: `Tender #${bid.tenderId}`,
+                    bidAmount: Number(blockchain.fromWei(bid.amount)),
+                    submissionDate: new Date(Number(bid.issueDate) * 1000).toLocaleDateString(),
+                    status: statusValue === 0 ? "Submitted" : statusValue === 1 ? "Awarded" : "Rejected"
+                };
+            });
 
             return transformedBids;
         } catch (error) {
@@ -129,6 +136,7 @@ function BDashboard() {
                 ]);
                 setTenders(tendersData);
                 setProfile(profileData);
+                console.log(bidsData)
                 setMyBids(bidsData);
 
                 // Data is already set by individual functions, but we can use the returned data here if needed

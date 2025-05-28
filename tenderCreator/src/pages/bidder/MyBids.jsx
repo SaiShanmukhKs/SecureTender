@@ -48,7 +48,6 @@ function MyBids() {
                 // Get tender details to add title
                 const tenderDetails = await blockchain.getTenderDetails(bid.tenderId);
 
-
                 // Enum mapping: TenderStatus {Closed=0, Open=1, Cancelled=2}
                 const statusMapping = {
                     "0": "Closed",
@@ -59,10 +58,13 @@ function MyBids() {
                 const statusKey = typeof bid.status === 'bigint' ?
                     bid.status.toString() : bid.status.toString();
 
+                // Convert BigInt status to number for comparison
+                const statusValue = typeof bid.status === 'bigint' ? Number(bid.status) : bid.status;
+
                 // Convert the BidStatus enum to string representation
                 let statusText = "Submitted";
-                if (bid.status === 1) statusText = "Accepted";
-                else if (bid.status === 2) statusText = "Rejected";
+                if (statusValue === 1) statusText = "Awarded";  // Changed from "Accepted" to "Awarded" to match your filter
+                else if (statusValue === 2) statusText = "Rejected";
 
                 const bidAmountInWei = typeof bid.amount === 'bigint' ?
                     bid.amount.toString() : bid.amount;
