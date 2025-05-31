@@ -4,6 +4,8 @@ import { TenderContext } from '../../context/TenderContext';
 import { useBlockchainTendering } from '../../context/ContractContext';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import './CreateTender.css'; // Assuming you have a CSS file for styles
+
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
@@ -185,7 +187,7 @@ const CreateTender = () => {
                             min="0"
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
-                        <p className="mt-1 text-sm text-gray-500">Fee required to place a bid</p>
+                        <p className="mt-1 text-sm text-gray-500">Maximum Budget for Tender</p>
                     </div>
 
                     <div className="form-group">

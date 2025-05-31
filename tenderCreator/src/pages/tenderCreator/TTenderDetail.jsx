@@ -4,6 +4,7 @@ import { useBlockchainTendering } from '../../context/ContractContext';
 import StatusBadge from '../../components/StatusBadge';
 import useParams from '../../hooks/useParams';
 import axios from 'axios';
+import './TTenderDetail.css'; // Assuming you have a CSS file for styling
 
 const TTenderDetail = () => {
     const [tender, setTender] = useState(null);
@@ -96,7 +97,7 @@ const TTenderDetail = () => {
         : null;
 
     return (
-        <div className="content">
+        <div className="tender-detail-page content">
             <div className="detail-header">
                 <h1>{tender.title}</h1>
                 <StatusBadge status={statusMapping[getStatusKey(tender.tenderStatus)]} />

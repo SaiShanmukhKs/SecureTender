@@ -1,0 +1,141 @@
+.tender-detail-page {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 24px;
+    background-color: #fefefe;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.tender-detail-page .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.tender-detail-page .detail-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.tender-detail-page .detail-section {
+    margin-bottom: 32px;
+}
+
+.tender-detail-page .detail-section h3 {
+    margin-bottom: 16px;
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.tender-detail-page .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.tender-detail-page .detail-item strong {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+}
+
+.tender-detail-page .detail-item p {
+    margin: 0;
+    color: #555;
+}
+
+.tender-detail-page table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.tender-detail-page thead {
+    background-color: #007bff;
+    color: white;
+}
+
+.tender-detail-page th,
+.tender-detail-page td {
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.tender-detail-page tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.tender-detail-page tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.tender-detail-page .btn {
+    display: inline-block;
+    padding: 8px 14px;
+    font-size: 14px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.tender-detail-page .btn-primary {
+    background-color: #007bff;
+    color: white;
+    border: none;
+}
+
+.tender-detail-page .btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.tender-detail-page .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+}
+
+.tender-detail-page .btn-secondary:hover {
+    background-color: #545b62;
+}
+
+.tender-detail-page .btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.tender-detail-page .no-results {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+    font-size: 18px;
+}
+
+.tender-detail-page .form-actions {
+    text-align: center;
+    margin-top: 30px;
+}
+
+@media (max-width: 600px) {
+    .tender-detail-page .detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .tender-detail-page th,
+    .tender-detail-page td {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .tender-detail-page .btn {
+        width: 100%;
+        text-align: center;
+    }
+}

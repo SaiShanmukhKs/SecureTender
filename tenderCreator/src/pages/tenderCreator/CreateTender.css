@@ -1,0 +1,105 @@
+/* Global Container */
+.create-tender {
+  max-width: 800px;
+  margin: 60px auto;
+  padding: 40px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Title */
+.create-tender h1 {
+  font-size: 32px;
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+/* Error Box */
+.error-alert {
+  background-color: #ffe5e5;
+  border: 1px solid #ff6b6b;
+  color: #a60000;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Form Styling */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Label */
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
+}
+
+/* Input & Textarea */
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #1e90ff;
+  background-color: #fff;
+}
+
+/* Helper Text */
+.form-group p {
+  font-size: 12px;
+  color: #777;
+  margin-top: 4px;
+}
+
+/* Two-Column Layout for Desktop */
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+/* Submit Button */
+button[type="submit"] {
+  background-color: #1e90ff;
+  color: #fff;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #0d6efd;
+}
+
+button[type="submit"]:disabled {
+  background-color: #a6c8ff;
+  cursor: not-allowed;
+}

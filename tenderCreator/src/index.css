@@ -220,7 +220,7 @@ h3 {
   margin: 0 var(--space-6);
   padding: var(--space-4) var(--space-8);
   position: sticky;
-  top: var(--space-4);
+  top: 0;
   z-index: 100;
   box-shadow: var(--shadow-xl), var(--shadow-colored);
   transition: var(--transition-smooth);
