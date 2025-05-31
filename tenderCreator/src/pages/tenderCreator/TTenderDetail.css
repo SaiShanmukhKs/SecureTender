@@ -63,7 +63,7 @@
 .tender-detail-page td {
     padding: 12px 16px;
     border: 1px solid #ddd;
-    text-align: left;
+    text-align: center;
 }
 
 .tender-detail-page tbody tr:nth-child(even) {
@@ -132,6 +132,7 @@
     .tender-detail-page td {
         font-size: 14px;
         padding: 10px;
+        text-align: center;
     }
 
     .tender-detail-page .btn {

@@ -103,15 +103,15 @@ const AllTenders = () => {
                         <tbody>
                             {tenders.map(tender => (
                                 <tr key={tender.id} className="hover:bg-gray-50">
-                                    <td className="py-2 px-4 border-b">{tender.id}</td>
-                                    <td className="py-2 px-4 border-b">{tender.title}</td>
-                                    <td className="py-2 px-4 border-b">{tender.deadline}</td>
-                                    <td className="py-2 px-4 border-b">
+                                    <td className="py-3 px-4 border-b text-center">{tender.id}</td>
+                                    <td className="py-3 px-4 border-b text-center">{tender.title}</td>
+                                    <td className="py-3 px-4 border-b text-center">{tender.deadline}</td>
+                                    <td className="py-3 px-4 border-b text-center">
                                         <StatusBadge status={tender.status} />
                                     </td>
-                                    <td className="py-2 px-4 border-b">{tender.bidders}</td>
-                                    <td className="py-2 px-4 border-b">{tender.tenderFee}</td>
-                                    <td className="py-2 px-4 border-b">
+                                    <td className="py-3 px-4 border-b text-center">{tender.bidders}</td>
+                                    <td className="py-3 px-4 border-b text-center">{tender.tenderFee}</td>
+                                    <td className="py-3 px-4 border-b text-center">
                                         <Link
                                             to={`/tender/${tender.id}`}
                                             className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-sm"

@@ -686,8 +686,49 @@ th::after {
 }
 
 td {
+  
+  text-align: center;
   padding: var(--space-5) var(--space-6);
   border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+}
+td {
+  text-align: center;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+td button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: var(--space-2) var(--space-4);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 2px;
+}
+
+td button:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+td button:active {
+  background: #1d4ed8;
+  transform: translateY(0);
+}
+
+td button:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+td button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
 }
 
 tbody tr {
