@@ -6,7 +6,7 @@ function BNavbar() {
         <nav className="navbar">
             <div className="navbar-brand">Tender Bidding Portal</div>
             <ul className="navbar-nav">
-                <li><Link to="/">Dashboard</Link></li>
+                <li><Link to="/dashboard">Dashboard</Link></li>
                 <li><Link to="/tenders">Available Tenders</Link></li>
                 <li><Link to="/my-bids">My Bids</Link></li>
                 <li><Link to="/profile">My Profile</Link></li>

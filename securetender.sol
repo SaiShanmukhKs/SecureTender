@@ -42,6 +42,9 @@ contract BlockchainTendering {
         address winner;
         uint[] bidIds;
         uint[] transactionIds;
+        uint totalAmount; // Total amount to be dispersed
+        uint dispersedAmount; // Amount already dispersed
+        uint phasesCompleted; // Number of phases completed
     }
 
     struct TransactionInput {
@@ -57,6 +60,11 @@ contract BlockchainTendering {
 
     mapping(address => uint[]) public tendersByCreator;
     mapping(address => uint[]) public bidsByBidder;
+
+    // Events
+    event WinnerSelected(uint indexed tenderId, address indexed winner, uint amount);
+    event FundsReceived(uint indexed tenderId, address indexed from, uint amount);
+    event FundsDispersed(uint indexed tenderId, address indexed to, uint amount, uint phase);
 
     // ============ MODIFIERS ============
 
@@ -83,6 +91,8 @@ contract BlockchainTendering {
     // ============ FUNCTIONS ============
 
     function createTender(string memory title, string memory rfp, uint startDate, uint endDate, uint tenderFee, uint registrationFee, uint phases) public {
+        require(phases > 0, "Phases must be greater than 0");
+        
         tenderCount++;
         Tender storage t = tenders[tenderCount];
         t.tenderId = tenderCount;
@@ -95,6 +105,9 @@ contract BlockchainTendering {
         t.moneyDispersalPhases = phases;
         t.createdBy = msg.sender;
         t.tenderStatus = TenderStatus.Open;
+        t.totalAmount = 0;
+        t.dispersedAmount = 0;
+        t.phasesCompleted = 0;
 
         tendersByCreator[msg.sender].push(tenderCount);
     }
@@ -160,7 +173,6 @@ contract BlockchainTendering {
 
     function getTenderDetails(uint _tenderId) external view returns (Tender memory) {
         Tender storage tender = tenders[_tenderId];
-
         return tender;
     }
 
@@ -169,6 +181,10 @@ contract BlockchainTendering {
         string memory _detailsFile,
         uint _amount
     ) public validTender(_tenderId) {
+        require(tenders[_tenderId].tenderStatus == TenderStatus.Open, "Tender is not open");
+        require(block.timestamp <= tenders[_tenderId].endDate, "Tender has ended");
+        require(_amount > 0, "Bid amount must be greater than 0");
+        
         bidCount++;
         Bid storage b = bids[bidCount];
         b.bidId = bidCount;
@@ -196,14 +212,19 @@ contract BlockchainTendering {
         validTender(_tenderId)
         onlyCreator(_tenderId)
     {
+        require(tenders[_tenderId].tenderStatus == TenderStatus.Open, "Tender is not open");
+        
         uint[] memory bidIds = tenders[_tenderId].bidIds;
         bool winnerHasBid = false;
+        uint winningBidAmount = 0;
         
+        // Find the winning bid and set statuses
         for (uint i = 0; i < bidIds.length; i++) {
             uint bidId = bidIds[i];
             if (bids[bidId].createdBy == _winner) {
                 bids[bidId].status = BidStatus.Accepted;
                 winnerHasBid = true;
+                winningBidAmount = bids[bidId].amount;
             } else {
                 // Reject all other bids
                 bids[bidId].status = BidStatus.Rejected;
@@ -215,6 +236,125 @@ contract BlockchainTendering {
         
         tenders[_tenderId].winner = _winner;
         tenders[_tenderId].tenderStatus = TenderStatus.Closed;
+        tenders[_tenderId].totalAmount = winningBidAmount;
+        
+        emit WinnerSelected(_tenderId, _winner, winningBidAmount);
+    }
+
+    // Function for winner to send the bid amount to the contract
+    function sendBidAmount(uint _tenderId) 
+        public 
+        payable 
+        validTender(_tenderId) 
+        onlyWinner(_tenderId) 
+    {
+        require(tenders[_tenderId].tenderStatus == TenderStatus.Closed, "Tender is not closed");
+        require(msg.value == tenders[_tenderId].totalAmount, "Incorrect amount sent");
+        require(address(this).balance >= msg.value, "Contract balance insufficient");
+        
+        emit FundsReceived(_tenderId, msg.sender, msg.value);
+        
+        // Log the transaction
+        TransactionInput memory input = TransactionInput({
+            tenderId: _tenderId,
+            bidder: msg.sender,
+            amount: msg.value,
+            status: "Funds Received"
+        });
+        
+        logTransaction(input);
+    }
+
+    // New disperseFunds function that disperses funds in equal phases
+    function disperseFunds(uint _tenderId)
+        public
+        validTender(_tenderId)
+        onlyCreator(_tenderId)
+    {
+        Tender storage tender = tenders[_tenderId];
+        require(tender.tenderStatus == TenderStatus.Closed, "Tender is not closed");
+        require(tender.winner != address(0), "No winner selected");
+        require(tender.phasesCompleted < tender.moneyDispersalPhases, "All phases completed");
+        require(address(this).balance >= tender.totalAmount, "Insufficient contract balance");
+        
+        // Calculate amount per phase
+        uint amountPerPhase = tender.totalAmount / tender.moneyDispersalPhases;
+        
+        // For the last phase, send any remaining amount due to rounding
+        if (tender.phasesCompleted == tender.moneyDispersalPhases - 1) {
+            amountPerPhase = tender.totalAmount - tender.dispersedAmount;
+        }
+        
+        require(amountPerPhase > 0, "No amount to disperse");
+        
+        address payable winner = payable(tender.winner);
+        
+        // Transfer the funds
+        winner.transfer(amountPerPhase);
+        
+        // Update tender state
+        tender.dispersedAmount += amountPerPhase;
+        tender.phasesCompleted++;
+        
+        emit FundsDispersed(_tenderId, winner, amountPerPhase, tender.phasesCompleted);
+        
+        // Log the transaction
+        TransactionInput memory input = TransactionInput({
+            tenderId: _tenderId,
+            bidder: winner,
+            amount: amountPerPhase,
+            status: string(abi.encodePacked("Phase ", uintToString(tender.phasesCompleted), " Transfer"))
+        });
+        
+        logTransaction(input);
+    }
+
+    // Helper function to convert uint to string
+    function uintToString(uint _i) internal pure returns (string memory) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint j = _i;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len;
+        while (_i != 0) {
+            k = k-1;
+            uint8 temp = (48 + uint8(_i - _i / 10 * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            _i /= 10;
+        }
+        return string(bstr);
+    }
+
+    // Get remaining phases for a tender
+    function getRemainingPhases(uint _tenderId) public view validTender(_tenderId) returns (uint) {
+        return tenders[_tenderId].moneyDispersalPhases - tenders[_tenderId].phasesCompleted;
+    }
+
+    // Get phase information for a tender
+    function getPhaseInfo(uint _tenderId) public view validTender(_tenderId) returns (
+        uint totalPhases,
+        uint completedPhases,
+        uint remainingPhases,
+        uint totalAmount,
+        uint dispersedAmount,
+        uint remainingAmount,
+        uint amountPerPhase
+    ) {
+        Tender storage tender = tenders[_tenderId];
+        totalPhases = tender.moneyDispersalPhases;
+        completedPhases = tender.phasesCompleted;
+        remainingPhases = totalPhases - completedPhases;
+        totalAmount = tender.totalAmount;
+        dispersedAmount = tender.dispersedAmount;
+        remainingAmount = totalAmount - dispersedAmount;
+        amountPerPhase = totalAmount > 0 ? totalAmount / totalPhases : 0;
     }
 
     function logTransaction(TransactionInput memory input)
@@ -232,25 +372,6 @@ contract BlockchainTendering {
         txObj.status = input.status;
 
         tenders[input.tenderId].transactionIds.push(txCount);
-    }
-
-    function disperseFunds(uint _tenderId, /* uint _phase,*/ uint _amount)
-        public
-        validTender(_tenderId)
-        onlyCreator(_tenderId)
-    {
-        address payable winner = payable(tenders[_tenderId].winner);
-        require(winner != address(0), "No winner selected");
-        winner.transfer(_amount);
-
-        TransactionInput memory input = TransactionInput({
-            tenderId: _tenderId,
-            bidder: winner,
-            amount: _amount,
-            status: "Phase Transfer"
-        });
-
-        logTransaction(input);
     }
 
     function updateStatus(uint _tenderId, uint _newStatus)
@@ -287,14 +408,10 @@ contract BlockchainTendering {
     }
 
     // IMPROVED: Return complete Bid objects instead of just IDs
-    // This function returns all bids placed by a specific bidder address
     function getBidsByBidder(address _bidder) public view returns (Bid[] memory) {
-        // First get the bid IDs associated with this bidder
         uint[] memory bidderBidIds = bidsByBidder[_bidder];
-        
-        // Create an array to hold the actual Bid objects
         Bid[] memory bidderBids = new Bid[](bidderBidIds.length);
-                // Populate the array with full Bid objects by referencing each ID
+        
         for (uint i = 0; i < bidderBidIds.length; i++) {
             bidderBids[i] = bids[bidderBidIds[i]];
         }
@@ -302,7 +419,7 @@ contract BlockchainTendering {
         return bidderBids;
     }
 
-    // NEW: Get transactions for a specific tender
+    // Get transactions for a specific tender
     function getTransactionsForTender(uint _tenderId) public view validTender(_tenderId) returns (Transaction[] memory) {
         uint[] memory txIds = tenders[_tenderId].transactionIds;
         Transaction[] memory tenderTxs = new Transaction[](txIds.length);
