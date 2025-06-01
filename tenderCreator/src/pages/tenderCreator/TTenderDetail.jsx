@@ -10,6 +10,7 @@ const TTenderDetail = () => {
     const [tender, setTender] = useState(null);
     const [bids, setBids] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [awarding, setAwarding] = useState(false);
     const [bidderInfo, setBidderInfo] = useState({});
     const [error, setError] = useState(null);
     const blockchain = useBlockchainTendering();
@@ -74,16 +75,61 @@ const TTenderDetail = () => {
         fetchTenderDetails();
     }, [blockchain, tenderId]);
 
+    const handleAward = async (bidderAddress) => {
+        // Add confirmation dialog
+        const bidderName = bidderInfo[bidderAddress]?.name || bidderAddress;
+        if (!window.confirm(`Are you sure you want to award this tender to ${bidderName}?`)) {
+            return;
+        }
+
+        try {
+            setAwarding(true);
+            setError(null);
+            
+            // Find the winning bid to get the bid amount
+            const winningBid = bids.find(bid => bid.createdBy === bidderAddress);
+            if (!winningBid) {
+                setError("Could not find the selected bid");
+                return;
+            }
+
+            // Convert bid amount from Wei to Ether for the setWinner function
+            const winningBidAmountInEther = blockchain.fromWei(winningBid.amount);
+            
+            console.log("Awarding tender to:", bidderAddress);
+            console.log("Winning bid amount (ETH):", winningBidAmountInEther);
+
+            // Call setWinner with the required parameters
+            const result = await blockchain.setWinner(tenderId, bidderAddress, winningBidAmountInEther);
+            
+            if (result) {
+                console.log("Tender awarded successfully:", result);
+                // Refresh the tender details to show the updated state
+                const updatedTenderDetails = await blockchain.getTenderDetails(tenderId);
+                setTender(updatedTenderDetails);
+                
+                // Show success message
+                alert(`Tender successfully awarded to ${bidderName}!`);
+            } else {
+                setError("Failed to award tender. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error awarding tender:", error);
+            setError(`Error awarding tender: ${error.message}`);
+        } finally {
+            setAwarding(false);
+        }
+    };
+
+    const handlePayBidder = () => {
+        navigate(`/paybidder/${tenderId}`);
+    };
+
     if (loading) return <div className="no-results">Loading tender details...</div>;
-    if (error) return <div className="no-results">{error}</div>;
+    if (error && !tender) return <div className="no-results">{error}</div>;
     if (!tender) return <div className="no-results">Tender not found</div>;
 
     const sortedBidders = bids.sort((a, b) => Number(a.amount) - Number(b.amount));
-
-    const handleAward = (bidderAddress) => {
-        blockchain.awardTender(tenderId, bidderAddress);
-        navigate("/awarded-tenders");
-    };
 
     const isValidAddress = (address) =>
         address && address.toLowerCase() !== '0x0000000000000000000000000000000000000000';
@@ -103,6 +149,18 @@ const TTenderDetail = () => {
                 <StatusBadge status={statusMapping[getStatusKey(tender.tenderStatus)]} />
             </div>
 
+            {error && (
+                <div className="alert alert-error" style={{ margin: '20px 0' }}>
+                    {error}
+                    <button 
+                        onClick={() => setError(null)} 
+                        style={{ float: 'right', background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer' }}
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
+
             <div className="detail-section">
                 <div className="detail-grid">
                     <div className="detail-item">
@@ -112,6 +170,14 @@ const TTenderDetail = () => {
                     <div className="detail-item">
                         <strong>Description</strong>
                         <p>{tender.rfp}</p>
+                    </div>
+                    <div className="detail-item">
+                        <strong>Tender Fee</strong>
+                        <p>{blockchain.fromWei ? blockchain.fromWei(tender.tenderFee) : (tender.tenderFee / 1e18).toString()} ETH</p>
+                    </div>
+                    <div className="detail-item">
+                        <strong>Registration Fee</strong>
+                        <p>{blockchain.fromWei ? blockchain.fromWei(tender.registrationFee) : (tender.registrationFee / 1e18).toString()} ETH</p>
                     </div>
                 </div>
             </div>
@@ -128,7 +194,7 @@ const TTenderDetail = () => {
                             <strong>Bid Amount</strong>
                             <p>
                                 {bids.find(b => b.createdBy === awardedBidder.address)
-                                    ? blockchain.fromWei(bids.find(b => b.createdBy === awardedBidder.address).amount)
+                                    ? `${blockchain.fromWei(bids.find(b => b.createdBy === awardedBidder.address).amount)} ETH`
                                     : "-"}
                             </p>
                         </div>
@@ -140,6 +206,18 @@ const TTenderDetail = () => {
                                     : "-"}
                             </p>
                         </div>
+                        <div className="detail-item">
+                            <strong>Contact</strong>
+                            <p>{awardedBidder.email || "-"}</p>
+                        </div>
+                    </div>
+                    <div className="form-actions" style={{ marginTop: '20px' }}>
+                        <button 
+                            className="btn btn-success"
+                            onClick={handlePayBidder}
+                        >
+                            Pay Bidder
+                        </button>
                     </div>
                 </div>
             )}
@@ -147,48 +225,116 @@ const TTenderDetail = () => {
             {statusMapping[getStatusKey(tender.tenderStatus)] === "Open" && (
                 <div className="detail-section">
                     <h3>Top 3 Bidders</h3>
-                    {tender.bidIds.length > 0 ? (
+                    {tender.bidIds && tender.bidIds.length > 0 ? (
+                        <div className="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Name</th>
+                                        <th>Bid Amount (ETH)</th>
+                                        <th>Rating</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sortedBidders.slice(0, 3).map((bidder, index) => (
+                                        <tr key={bidder.bidId}>
+                                            <td>#{index + 1}</td>
+                                            <td>{bidderInfo[bidder.createdBy]?.name || bidder.createdBy}</td>
+                                            <td>
+                                                {blockchain.fromWei
+                                                    ? blockchain.fromWei(bidder.amount)
+                                                    : (bidder.amount / 1e18).toString()}
+                                            </td>
+                                            <td>
+                                                {bidderInfo[bidder.createdBy]?.rating 
+                                                    ? `${bidderInfo[bidder.createdBy].rating.toFixed(1)}/5`
+                                                    : '-'}
+                                            </td>
+                                            <td>
+                                                <div className="bid-details">
+                                                    {bidder.detailsFile && bidder.detailsFile.length > 50 
+                                                        ? `${bidder.detailsFile.substring(0, 50)}...`
+                                                        : bidder.detailsFile || "No details provided"}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="btn btn-primary btn-sm"
+                                                    onClick={() => handleAward(bidder.createdBy)}
+                                                    disabled={awarding}
+                                                >
+                                                    {awarding ? 'Awarding...' : 'Award Tender'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="no-results">
+                            <p>No bidders have submitted proposals yet.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {statusMapping[getStatusKey(tender.tenderStatus)] === "Open" && sortedBidders.length > 3 && (
+                <div className="detail-section">
+                    <h3>All Other Bids ({sortedBidders.length - 3})</h3>
+                    <div className="table-container">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Rank</th>
                                     <th>Name</th>
-                                    <th>Bid Amount</th>
+                                    <th>Bid Amount (ETH)</th>
                                     <th>Rating</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {sortedBidders.slice(0, 3).map((bidder, index) => (
+                                {sortedBidders.slice(3).map((bidder, index) => (
                                     <tr key={bidder.bidId}>
-                                        <td>{index + 1}</td>
+                                        <td>#{index + 4}</td>
                                         <td>{bidderInfo[bidder.createdBy]?.name || bidder.createdBy}</td>
                                         <td>
                                             {blockchain.fromWei
                                                 ? blockchain.fromWei(bidder.amount)
                                                 : (bidder.amount / 1e18).toString()}
                                         </td>
-                                        <td>{bidderInfo[bidder.createdBy]?.rating?.toFixed(1) ?? '-'}</td>
+                                        <td>
+                                            {bidderInfo[bidder.createdBy]?.rating 
+                                                ? `${bidderInfo[bidder.createdBy].rating.toFixed(1)}/5`
+                                                : '-'}
+                                        </td>
                                         <td>
                                             <button
                                                 className="btn btn-primary btn-sm"
                                                 onClick={() => handleAward(bidder.createdBy)}
+                                                disabled={awarding}
                                             >
-                                                Award Tender
+                                                {awarding ? 'Awarding...' : 'Award Tender'}
                                             </button>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                    ) : (
-                        <p>No bidders have submitted proposals yet.</p>
-                    )}
+                    </div>
                 </div>
             )}
 
             <div className="form-actions">
                 <Link to="/all-tenders" className="btn btn-secondary">Back to All Tenders</Link>
+                {awardedBidder && (
+                    <Link to="/awarded-tenders" className="btn btn-info" style={{ marginLeft: '10px' }}>
+                        View Awarded Tenders
+                    </Link>
+                )}
             </div>
         </div>
     );

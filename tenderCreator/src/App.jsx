@@ -18,6 +18,7 @@ import BNavbar from './components/BNavbar.jsx';
 import TProfile from './pages/tenderCreator/TProfile.jsx';
 import BTenderDetail from './pages/bidder/BTenderDetail.jsx';
 import TTenderDetail from './pages/tenderCreator/TTenderDetail.jsx';
+import PayBidder from './pages/tenderCreator/PayBidder.jsx';
 
 const App = () => {
   let token = localStorage.getItem('userData');
@@ -40,6 +41,7 @@ const App = () => {
               <Route path="/awarded-tenders" element={<WithTNavbar><AwardedTenders /></WithTNavbar>} />
               <Route path="/tender/:id" element={<WithTNavbar><TTenderDetail /></WithTNavbar>} />
               <Route path="/profile" element={<WithTNavbar><TProfile /></WithTNavbar>} />
+              <Route path="/paybidder/:id" element={<WithTNavbar><PayBidder /></WithTNavbar>} />
             </>
           )}
 

@@ -45,6 +45,7 @@ contract BlockchainTendering {
         uint totalAmount; // Total amount to be dispersed
         uint dispersedAmount; // Amount already dispersed
         uint phasesCompleted; // Number of phases completed
+        bool fundsDeposited; // Track if funds are deposited
     }
 
     struct TransactionInput {
@@ -65,6 +66,7 @@ contract BlockchainTendering {
     event WinnerSelected(uint indexed tenderId, address indexed winner, uint amount);
     event FundsReceived(uint indexed tenderId, address indexed from, uint amount);
     event FundsDispersed(uint indexed tenderId, address indexed to, uint amount, uint phase);
+    event RegistrationFeePaid(uint indexed tenderId, address indexed bidder, address indexed creator, uint amount);
 
     // ============ MODIFIERS ============
 
@@ -108,6 +110,7 @@ contract BlockchainTendering {
         t.totalAmount = 0;
         t.dispersedAmount = 0;
         t.phasesCompleted = 0;
+        t.fundsDeposited = false;
 
         tendersByCreator[msg.sender].push(tenderCount);
     }
@@ -180,10 +183,22 @@ contract BlockchainTendering {
         uint _tenderId,
         string memory _detailsFile,
         uint _amount
-    ) public validTender(_tenderId) {
+    ) public payable validTender(_tenderId) {
         require(tenders[_tenderId].tenderStatus == TenderStatus.Open, "Tender is not open");
         require(block.timestamp <= tenders[_tenderId].endDate, "Tender has ended");
         require(_amount > 0, "Bid amount must be greater than 0");
+        
+        // Require registration fee payment
+        uint registrationFee = tenders[_tenderId].registrationFee;
+        require(msg.value == registrationFee, "Must pay exact registration fee");
+        
+        // Transfer registration fee to tender creator
+        if (registrationFee > 0) {
+            address payable creator = payable(tenders[_tenderId].createdBy);
+            creator.transfer(registrationFee);
+            
+            emit RegistrationFeePaid(_tenderId, msg.sender, tenders[_tenderId].createdBy, registrationFee);
+        }
         
         bidCount++;
         Bid storage b = bids[bidCount];
@@ -197,6 +212,16 @@ contract BlockchainTendering {
 
         tenders[_tenderId].bidIds.push(bidCount);
         bidsByBidder[msg.sender].push(bidCount);
+        
+        // Log the registration fee transaction
+        TransactionInput memory input = TransactionInput({
+            tenderId: _tenderId,
+            bidder: msg.sender,
+            amount: registrationFee,
+            status: "Registration Fee Paid"
+        });
+        
+        logTransaction(input);
     }
 
     function setBidStatus(uint _bidId, BidStatus _status)
@@ -207,51 +232,54 @@ contract BlockchainTendering {
         bids[_bidId].status = _status;
     }
 
+    // UPDATED: Tender creator pays the winning bid amount when selecting winner
     function setWinner(uint _tenderId, address _winner)
         public
+        payable
         validTender(_tenderId)
         onlyCreator(_tenderId)
     {
         require(tenders[_tenderId].tenderStatus == TenderStatus.Open, "Tender is not open");
+        require(!tenders[_tenderId].fundsDeposited, "Funds already deposited");
         
         uint[] memory bidIds = tenders[_tenderId].bidIds;
         bool winnerHasBid = false;
         uint winningBidAmount = 0;
         
-        // Find the winning bid and set statuses
+        // Find the winning bid and get the amount
         for (uint i = 0; i < bidIds.length; i++) {
             uint bidId = bidIds[i];
             if (bids[bidId].createdBy == _winner) {
-                bids[bidId].status = BidStatus.Accepted;
                 winnerHasBid = true;
                 winningBidAmount = bids[bidId].amount;
-            } else {
-                // Reject all other bids
-                bids[bidId].status = BidStatus.Rejected;
+                break;
             }
         }
         
         // Ensure the winner has placed a bid
         require(winnerHasBid, "Winner has not placed a bid");
         
+        // Require the tender creator to send the exact winning bid amount
+        require(msg.value == winningBidAmount, "Must send exact winning bid amount");
+        require(msg.value > 0, "Winning bid amount must be greater than 0");
+        
+        // Set bid statuses
+        for (uint i = 0; i < bidIds.length; i++) {
+            uint bidId = bidIds[i];
+            if (bids[bidId].createdBy == _winner) {
+                bids[bidId].status = BidStatus.Accepted;
+            } else {
+                bids[bidId].status = BidStatus.Rejected;
+            }
+        }
+        
+        // Update tender details
         tenders[_tenderId].winner = _winner;
         tenders[_tenderId].tenderStatus = TenderStatus.Closed;
         tenders[_tenderId].totalAmount = winningBidAmount;
+        tenders[_tenderId].fundsDeposited = true;
         
         emit WinnerSelected(_tenderId, _winner, winningBidAmount);
-    }
-
-    // Function for winner to send the bid amount to the contract
-    function sendBidAmount(uint _tenderId) 
-        public 
-        payable 
-        validTender(_tenderId) 
-        onlyWinner(_tenderId) 
-    {
-        require(tenders[_tenderId].tenderStatus == TenderStatus.Closed, "Tender is not closed");
-        require(msg.value == tenders[_tenderId].totalAmount, "Incorrect amount sent");
-        require(address(this).balance >= msg.value, "Contract balance insufficient");
-        
         emit FundsReceived(_tenderId, msg.sender, msg.value);
         
         // Log the transaction
@@ -259,13 +287,16 @@ contract BlockchainTendering {
             tenderId: _tenderId,
             bidder: msg.sender,
             amount: msg.value,
-            status: "Funds Received"
+            status: "Funds Deposited by Creator"
         });
         
         logTransaction(input);
     }
 
-    // New disperseFunds function that disperses funds in equal phases
+    // UPDATED: Remove sendBidAmount function as it's no longer needed
+    // The funds are now collected in setWinner function
+
+    // Updated disperseFunds function - now only disperses already deposited funds
     function disperseFunds(uint _tenderId)
         public
         validTender(_tenderId)
@@ -274,8 +305,9 @@ contract BlockchainTendering {
         Tender storage tender = tenders[_tenderId];
         require(tender.tenderStatus == TenderStatus.Closed, "Tender is not closed");
         require(tender.winner != address(0), "No winner selected");
+        require(tender.fundsDeposited, "Funds not deposited yet");
         require(tender.phasesCompleted < tender.moneyDispersalPhases, "All phases completed");
-        require(address(this).balance >= tender.totalAmount, "Insufficient contract balance");
+        require(address(this).balance >= tender.totalAmount - tender.dispersedAmount, "Insufficient contract balance");
         
         // Calculate amount per phase
         uint amountPerPhase = tender.totalAmount / tender.moneyDispersalPhases;
@@ -345,7 +377,8 @@ contract BlockchainTendering {
         uint totalAmount,
         uint dispersedAmount,
         uint remainingAmount,
-        uint amountPerPhase
+        uint amountPerPhase,
+        bool fundsDeposited
     ) {
         Tender storage tender = tenders[_tenderId];
         totalPhases = tender.moneyDispersalPhases;
@@ -355,12 +388,12 @@ contract BlockchainTendering {
         dispersedAmount = tender.dispersedAmount;
         remainingAmount = totalAmount - dispersedAmount;
         amountPerPhase = totalAmount > 0 ? totalAmount / totalPhases : 0;
+        fundsDeposited = tender.fundsDeposited;
     }
 
     function logTransaction(TransactionInput memory input)
-        public
+        internal
         validTender(input.tenderId)
-        onlyCreator(input.tenderId)
     {
         txCount++;
         Transaction storage txObj = transactions[txCount];
@@ -372,6 +405,15 @@ contract BlockchainTendering {
         txObj.status = input.status;
 
         tenders[input.tenderId].transactionIds.push(txCount);
+    }
+    
+    // Public function for manual transaction logging (if needed)
+    function logTransactionPublic(TransactionInput memory input)
+        public
+        validTender(input.tenderId)
+        onlyCreator(input.tenderId)
+    {
+        logTransaction(input);
     }
 
     function updateStatus(uint _tenderId, uint _newStatus)
@@ -429,6 +471,27 @@ contract BlockchainTendering {
         }
         
         return tenderTxs;
+    }
+
+    // Get total registration fees collected for a tender
+    function getRegistrationFeesCollected(uint _tenderId) public view validTender(_tenderId) returns (uint) {
+        return tenders[_tenderId].bidIds.length * tenders[_tenderId].registrationFee;
+    }
+    
+    // Get registration fee for a specific tender
+    function getRegistrationFee(uint _tenderId) public view validTender(_tenderId) returns (uint) {
+        return tenders[_tenderId].registrationFee;
+    }
+
+    // Function to check if funds can be dispersed
+    function canDisperseFunds(uint _tenderId) public view validTender(_tenderId) returns (bool) {
+        Tender storage tender = tenders[_tenderId];
+        return (
+            tender.tenderStatus == TenderStatus.Closed &&
+            tender.winner != address(0) &&
+            tender.fundsDeposited &&
+            tender.phasesCompleted < tender.moneyDispersalPhases
+        );
     }
 
     receive() external payable {}

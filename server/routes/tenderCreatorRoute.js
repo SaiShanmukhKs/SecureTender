@@ -41,42 +41,77 @@ router.get("/bidderDetails", authenticateToken, async (req, res) => {
     }
 
     res.status(200).json({
+      id: bidder._id, // Include the bidder ID for rating
       name: bidder.name,
-      rating: bidder.rating,
+      rating: bidder.rating || 0,
+      tendersCompeted: bidder.tendersCompeted || 0
     });
   } catch (err) {
+    console.error("Error fetching bidder details:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
+// CORRECTED: Rate a bidder by wallet address (matches frontend call)
+router.put("/rateBidder", authenticateToken, async (req, res) => {
+  const { bidderAddress, rating } = req.body;
 
-// Rate a bidder
-router.post("/rate/:bidderId", authenticateToken, async (req, res) => {
-  const { rating } = req.body;
-  const { bidderId } = req.params;
+  // Validation
+  if (!bidderAddress) {
+    return res.status(400).json({ error: "Bidder address is required" });
+  }
 
   if (!rating || rating < 1 || rating > 5) {
     return res.status(400).json({ error: "Rating must be between 1 and 5" });
   }
 
   try {
-    const bidder = await Bidder.findById(bidderId);
+    // Find bidder by wallet address
+    const bidder = await Bidder.findOne({ walletAddress: bidderAddress });
+    
     if (!bidder) {
       return res.status(404).json({ error: "Bidder not found" });
     }
 
-    const newRating =
-      (bidder.rating * bidder.tendersCompeted + rating) /
-      (bidder.tendersCompeted + 1);
-    bidder.rating = newRating;
+    // Check if this tender creator has already rated this bidder
+    const existingRating = bidder.ratings?.find(
+      r => r.by.toString() === req.user.id
+    );
+
+    if (existingRating) {
+      return res.status(400).json({ error: "You have already rated this bidder" });
+    }
+
+    // Initialize ratings array if it doesn't exist
+    if (!bidder.ratings) {
+      bidder.ratings = [];
+    }
+
+    // Add the new rating
+    bidder.ratings.push({
+      value: rating,
+      by: req.user.id,
+      createdAt: new Date()
+    });
+
+    // Calculate new average rating
+    const totalRatings = bidder.ratings.length;
+    const sumRatings = bidder.ratings.reduce((sum, r) => sum + r.value, 0);
+    bidder.rating = sumRatings / totalRatings;
+
+    // Increment tenders competed (assuming this is called after tender completion)
     bidder.tendersCompeted = (bidder.tendersCompeted || 0) + 1;
 
-    bidder.rating = bidder.rating || [];
-    bidder.rating.push({ value: rating, by: req.user.id });
     await bidder.save();
 
-    res.status(200).json({ message: "Bidder rated successfully" });
+    res.status(200).json({ 
+      message: "Bidder rated successfully",
+      newRating: bidder.rating,
+      totalRatings: totalRatings
+    });
+
   } catch (err) {
+    console.error("Error rating bidder:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -84,7 +119,7 @@ router.post("/rate/:bidderId", authenticateToken, async (req, res) => {
 // Update tender count
 router.put("/update-tendercount", authenticateToken, async (req, res) => {
   try {
-    console.log("Req", req.body.userId)
+    console.log("Req", req.body.userId);
     const tenderCreator = await TenderCreator.findById(req.body.userId);
     if (!tenderCreator) {
       return res.status(404).json({ error: "Tender Creator not found" });
@@ -95,6 +130,7 @@ router.put("/update-tendercount", authenticateToken, async (req, res) => {
 
     res.status(200).json({ message: "Tender count updated successfully" });
   } catch (err) {
+    console.error("Error updating tender count:", err);
     res.status(500).json({ error: err.message });
   }
 });

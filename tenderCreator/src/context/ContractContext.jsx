@@ -109,17 +109,8 @@ export const BlockchainTenderingProvider = ({ children }) => {
     // Contract functions
     const contextValue = {
         account,
-
-        // Registration functions
-        registerBidder: async (orgName) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.registerBidder(orgName).send(txOptions);
-        },
-
-        registerTenderCreator: async (orgName) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.registerTenderCreator(orgName).send(txOptions);
-        },
+        web3,
+        contract,
 
         // Tender creation and management
         createTender: async (title, rfp, startDate, endDate, tenderFee, registrationFee, phases) => {
@@ -129,145 +120,206 @@ export const BlockchainTenderingProvider = ({ children }) => {
             ).send(txOptions);
         },
 
-        closeTender: async (tenderId) => {
+        updateStatus: async (tenderId, newStatus) => {
             const txOptions = await getTxOptions();
-            return await contract.methods.closeTender(tenderId).send(txOptions);
+            return await contract.methods.updateStatus(tenderId, newStatus).send(txOptions);
         },
 
-        cancelTender: async (tenderId) => {
+        // Award tender function (added)
+        awardTender: async (tenderId, winnerAddress) => {
             const txOptions = await getTxOptions();
-            return await contract.methods.cancelTender(tenderId).send(txOptions);
+            return await contract.methods.setWinner(tenderId, winnerAddress).send(txOptions);
         },
 
         // Bidding functions
-        placeBid: async (tenderId, bidDetails, amount) => {
-            const value = web3.utils.toWei(amount.toString(), 'ether');
+        placeBid: async (tenderId, detailsFile, amount, registrationFeeInEther) => {
+            const value = web3.utils.toWei(registrationFeeInEther.toString(), 'ether');
+            const bidAmount = web3.utils.toWei(amount.toString(), 'ether');
             const txOptions = await getTxOptions();
-            console.log("Placing bid with value:", value);
+            console.log("Placing bid with registration fee:", value);
+            console.log("Bid amount:", bidAmount);
             console.log("Transaction options:", txOptions);
-            console.log("Bid details:", bidDetails);
-            console.log("Tender ID:", tenderId);
-            return await contract.methods.placeBid(tenderId, bidDetails, value).send(txOptions);
-        },
-        
-        awardTender: async(bidId, winnerAddress) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.setWinner(bidId, winnerAddress).send(txOptions);
-
-        },
-
-        getBidsForTender: async (tenderId) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.getBidsForTender(tenderId).call(txOptions);
-        },
-
-        approveBid: async (tenderId, bidId) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.approveBid(tenderId, bidId).send(txOptions);
-        },
-
-        rejectBid: async (tenderId, bidId) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.rejectBid(tenderId, bidId).send(txOptions);
-        },
-
-        setWinner: async (tenderId, bidId) => {
-            const txOptions = await getTxOptions();
-            return await contract.methods.setWinner(tenderId, bidId).send(txOptions);
-        },
-
-        // Payment functions
-        initiatePayment: async (tenderId, paymentAmount) => {
-            const value = web3.utils.toWei(paymentAmount.toString(), 'ether');
-            const txOptions = await getTxOptions();
-            return await contract.methods.initiatePayment(tenderId).send({
+            return await contract.methods.placeBid(tenderId, detailsFile, bidAmount).send({
                 ...txOptions,
                 value: value
             });
         },
 
-        releasePayment: async (tenderId, phase, amount) => {
+        setBidStatus: async (bidId, status) => {
             const txOptions = await getTxOptions();
-            return await contract.methods.releasePayment(tenderId, phase, amount).send(txOptions);
+            // status should be 0 (Pending), 1 (Accepted), or 2 (Rejected)
+            return await contract.methods.setBidStatus(bidId, status).send(txOptions);
         },
 
-        withdrawFees: async () => {
+        // Winner selection and fund management
+        setWinner: async (tenderId, winnerAddress, winningBidAmountInEther) => {
+            const value = web3.utils.toWei(winningBidAmountInEther.toString(), 'ether');
             const txOptions = await getTxOptions();
-            return await contract.methods.withdrawFees().send(txOptions);
+            console.log("Setting winner with fund deposit:", value);
+            return await contract.methods.setWinner(tenderId, winnerAddress).send({
+                ...txOptions,
+                value: value
+            });
         },
 
-        // Rating function
-        rateBidder: async (bidderId, rating) => {
+        // Fund dispersal functions
+        disperseFunds: async (tenderId) => {
             const txOptions = await getTxOptions();
-            return await contract.methods.rateBidder(bidderId, rating).send(txOptions);
+            return await contract.methods.disperseFunds(tenderId).send(txOptions);
         },
 
-        // View functions
+        // Phase-wise payment function (added for better phase management)
+        payPhase: async (tenderId, phaseIndex, amount) => {
+            const txOptions = await getTxOptions();
+            // This assumes your contract has a payPhase function
+            // If not, you'll need to implement it in your smart contract
+            return await contract.methods.payPhase(tenderId, phaseIndex).send({
+                ...txOptions,
+                value: amount
+            });
+        },
+
+        // Transaction logging
+        logTransactionPublic: async (transactionInput) => {
+            const txOptions = await getTxOptions();
+            return await contract.methods.logTransactionPublic(transactionInput).send(txOptions);
+        },
+
+        // View functions - Tender related
         getActiveTenders: async () => {
             console.log("Fetching active tenders...");
             return await contract.methods.getActiveTenders().call();
         },
 
-        getAwardedTenders: async (address) => {
-            return await contract.methods.getAwardedTenders(address).call();
+        getAwardedTenders: async (tenderCreatorAddress) => {
+            return await contract.methods.getAwardedTenders(tenderCreatorAddress).call();
         },
 
         getTenderDetails: async (tenderId) => {
             return await contract.methods.getTenderDetails(tenderId).call();
         },
 
-        getTenderBids: async (tenderId) => {
-            return await contract.methods.getTenderBids(tenderId).call();
+        getTendersByCreator: async (creatorAddress) => {
+            return await contract.methods.getTendersByCreator(creatorAddress).call();
         },
 
-        getBidDetails: async (tenderId, bidId) => {
-            return await contract.methods.getBidDetails(tenderId, bidId).call();
-        },
-
-        getBidderRating: async (bidderId) => {
-            return await contract.methods.getBidderRating(bidderId).call();
+        // View functions - Bid related
+        getBidsForTender: async (tenderId) => {
+            return await contract.methods.getBidsForTender(tenderId).call();
         },
 
         getBidsByBidder: async (bidderAddress) => {
             return await contract.methods.getBidsByBidder(bidderAddress).call();
         },
 
-        getTendersByCreator: async (tenderCreatorId) => {
-            return await contract.methods.getTendersByCreator(tenderCreatorId).call();
+        // View functions - Transaction related
+        getTransactionsForTender: async (tenderId) => {
+            return await contract.methods.getTransactionsForTender(tenderId).call();
         },
 
-        isTenderActive: async (tenderId) => {
-            return await contract.methods.isTenderActive(tenderId).call();
+        // View functions - Phase and payment related
+        getRemainingPhases: async (tenderId) => {
+            return await contract.methods.getRemainingPhases(tenderId).call();
         },
 
-        // User ID lookups
-        getBidderId: async (address) => {
-            return await contract.methods.addressToBidderId(address).call();
+        getPhaseInfo: async (tenderId) => {
+            return await contract.methods.getPhaseInfo(tenderId).call();
         },
 
-        getTenderCreatorId: async (address) => {
-            return await contract.methods.addressToTenderCreatorId(address).call();
+        canDisperseFunds: async (tenderId) => {
+            return await contract.methods.canDisperseFunds(tenderId).call();
+        },
+
+        // View functions - Fee related
+        getRegistrationFeesCollected: async (tenderId) => {
+            return await contract.methods.getRegistrationFeesCollected(tenderId).call();
+        },
+
+        getRegistrationFee: async (tenderId) => {
+            return await contract.methods.getRegistrationFee(tenderId).call();
+        },
+
+        // View functions - Contract state
+        getTenderCount: async () => {
+            return await contract.methods.tenderCount().call();
+        },
+
+        getBidCount: async () => {
+            return await contract.methods.bidCount().call();
+        },
+
+        getTxCount: async () => {
+            return await contract.methods.txCount().call();
+        },
+
+        // Direct mappings access (if needed)
+        getTender: async (tenderId) => {
+            return await contract.methods.tenders(tenderId).call();
+        },
+
+        getBid: async (bidId) => {
+            return await contract.methods.bids(bidId).call();
+        },
+
+        getTransaction: async (txId) => {
+            return await contract.methods.transactions(txId).call();
         },
 
         // Web3 utilities
-        toWei: (amount) => {
+        toWei: (amount, unit = 'ether') => {
             if (!web3 || !amount) return "0";
             try {
-                return web3.utils.toWei(amount.toString(), 'ether');
+                return web3.utils.toWei(amount.toString(), unit);
             } catch (error) {
                 console.error("Error converting to Wei:", error);
                 return "0";
             }
         },
-        fromWei: (amount) => {
+
+        fromWei: (amount, unit = 'ether') => {
             if (!web3 || !amount) return "0";
             try {
-                return web3.utils.fromWei(amount.toString(), 'ether');
+                return web3.utils.fromWei(amount.toString(), unit);
             } catch (error) {
                 console.error("Error converting from Wei:", error);
                 return "0";
             }
         },
+
+        // Helper functions for status conversion
+        getBidStatusString: (status) => {
+            const statuses = ['Pending', 'Accepted', 'Rejected'];
+            return statuses[status] || 'Unknown';
+        },
+
+        getTenderStatusString: (status) => {
+            const statuses = ['Closed', 'Open', 'Cancelled'];
+            return statuses[status] || 'Unknown';
+        },
+
+        // Contract balance
+        getContractBalance: async () => {
+            if (!web3) return "0";
+            try {
+                const balance = await web3.eth.getBalance(ADDRESS);
+                return web3.utils.fromWei(balance, 'ether');
+            } catch (error) {
+                console.error("Error getting contract balance:", error);
+                return "0";
+            }
+        },
+
+        // Account balance
+        getAccountBalance: async (address = account) => {
+            if (!web3 || !address) return "0";
+            try {
+                const balance = await web3.eth.getBalance(address);
+                return web3.utils.fromWei(balance, 'ether');
+            } catch (error) {
+                console.error("Error getting account balance:", error);
+                return "0";
+            }
+        }
     };
 
     return (

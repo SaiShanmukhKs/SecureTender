@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TenderContext } from '../../context/TenderContext';
 import { useBlockchainTendering } from '../../context/ContractContext';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
@@ -175,7 +174,7 @@ const CreateTender = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="form-group">
-                        <label htmlFor="tenderFee" className="block text-sm font-medium text-gray-700">Tender Fee (ETH)</label>
+                        <label htmlFor="tenderFee" className="block text-sm font-medium text-gray-700">Tender Maximum Budget (ETH)</label>
                         <input
                             type="number"
                             id="tenderFee"

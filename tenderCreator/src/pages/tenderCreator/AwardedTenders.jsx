@@ -163,7 +163,7 @@ const AwardedTenders = () => {
                                             View
                                         </Link>
                                         <Link
-                                            to={`/tender/${tender.id}/payments`}
+                                            to={`/paybidder/${tender.id}`}
                                             className="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm"
                                         >
                                             Payments

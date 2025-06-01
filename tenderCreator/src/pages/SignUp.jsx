@@ -62,6 +62,7 @@ export default function SignUp() {
                     address: value
                 }));
                 setError('Invalid wallet address format');
+                console.error('Error validating address:', error);
             }
         } else {
             setData((prevData) => {

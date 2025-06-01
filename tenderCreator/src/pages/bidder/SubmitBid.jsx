@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useBlockchainTendering } from '../../context/ContractContext';
 import './BidSubmit.css'; // Assuming you have a CSS file for styling
@@ -95,14 +95,32 @@ function SubmitBid() {
         setBidError(null);
 
         try {
-            // (tenderId, bidDetails, amount, paymentAmount
-            const result = await blockchain.placeBid(tenderId, bidData.notes, bidData.bidAmount);
+            // Convert registration fee from Wei to Ether for the function call
+            const registrationFeeInEther = blockchain.fromWei ? 
+                blockchain.fromWei(registrationFeeInWei) : 
+                (registrationFeeInWei / 1e18).toString();
+
+            console.log("Registration fee in Ether:", registrationFeeInEther);
+            console.log("Bid amount:", bidData.bidAmount);
+            console.log("Tender ID:", tenderId);
+            console.log("Bid notes:", bidData.notes);
+
+            // Call placeBid with all required parameters
+            const result = await blockchain.placeBid(
+                tenderId, 
+                bidData.notes, 
+                bidData.bidAmount, 
+                registrationFeeInEther
+            );
+            
             if (result) {
+                console.log("Bid submitted successfully:", result);
                 navigate("/my-bids");
             } else {
                 setBidError("Failed to submit bid. Please try again.");
             }
         } catch (err) {
+            console.error("Error submitting bid:", err);
             setBidError(`Error: ${err.message}`);
         } finally {
             setBidSubmitting(false);

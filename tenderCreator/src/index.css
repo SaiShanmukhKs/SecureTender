@@ -554,6 +554,7 @@ h3 {
   transition: var(--transition-elastic);
   position: relative;
   overflow: hidden;
+  margin: 10px 0;
 }
 
 .tender-card::before,

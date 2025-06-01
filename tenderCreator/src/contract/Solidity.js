@@ -1,180 +1,115 @@
 export const ABI = [
 	{
+		"anonymous": false,
 		"inputs": [
 			{
-				"internalType": "string",
-				"name": "title",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "rfp",
-				"type": "string"
-			},
-			{
+				"indexed": true,
 				"internalType": "uint256",
-				"name": "startDate",
+				"name": "tenderId",
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256",
-				"name": "endDate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tenderFee",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "registrationFee",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "phases",
-				"type": "uint256"
-			}
-		],
-		"name": "createTender",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_tenderId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_amount",
-				"type": "uint256"
-			}
-		],
-		"name": "disperseFunds",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "tenderId",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "bidder",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
-					},
-					{
-						"internalType": "string",
-						"name": "status",
-						"type": "string"
-					}
-				],
-				"internalType": "struct BlockchainTendering.TransactionInput",
-				"name": "input",
-				"type": "tuple"
-			}
-		],
-		"name": "logTransaction",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_tenderId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "_detailsFile",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_amount",
-				"type": "uint256"
-			}
-		],
-		"name": "placeBid",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_bidId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "enum BlockchainTendering.BidStatus",
-				"name": "_status",
-				"type": "uint8"
-			}
-		],
-		"name": "setBidStatus",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_tenderId",
-				"type": "uint256"
-			},
-			{
+				"indexed": true,
 				"internalType": "address",
-				"name": "_winner",
+				"name": "to",
 				"type": "address"
-			}
-		],
-		"name": "setWinner",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
+			},
 			{
+				"indexed": false,
 				"internalType": "uint256",
-				"name": "_tenderId",
+				"name": "amount",
 				"type": "uint256"
 			},
 			{
+				"indexed": false,
 				"internalType": "uint256",
-				"name": "_newStatus",
+				"name": "phase",
 				"type": "uint256"
 			}
 		],
-		"name": "updateStatus",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
+		"name": "FundsDispersed",
+		"type": "event"
 	},
 	{
-		"stateMutability": "payable",
-		"type": "receive"
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tenderId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "FundsReceived",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tenderId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "bidder",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "RegistrationFeePaid",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "tenderId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "winner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "WinnerSelected",
+		"type": "event"
 	},
 	{
 		"inputs": [],
@@ -263,6 +198,81 @@ export const ABI = [
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_tenderId",
+				"type": "uint256"
+			}
+		],
+		"name": "canDisperseFunds",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "title",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "rfp",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "startDate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "endDate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tenderFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "registrationFee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "phases",
+				"type": "uint256"
+			}
+		],
+		"name": "createTender",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_tenderId",
+				"type": "uint256"
+			}
+		],
+		"name": "disperseFunds",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "getActiveTenders",
 		"outputs": [
@@ -332,6 +342,26 @@ export const ABI = [
 						"internalType": "uint256[]",
 						"name": "transactionIds",
 						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "dispersedAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "phasesCompleted",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "fundsDeposited",
+						"type": "bool"
 					}
 				],
 				"internalType": "struct BlockchainTendering.Tender[]",
@@ -418,6 +448,26 @@ export const ABI = [
 						"internalType": "uint256[]",
 						"name": "transactionIds",
 						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "dispersedAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "phasesCompleted",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "fundsDeposited",
+						"type": "bool"
 					}
 				],
 				"internalType": "struct BlockchainTendering.Tender[]",
@@ -548,6 +598,117 @@ export const ABI = [
 				"type": "uint256"
 			}
 		],
+		"name": "getPhaseInfo",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "totalPhases",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "completedPhases",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "remainingPhases",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "dispersedAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "remainingAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amountPerPhase",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "fundsDeposited",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_tenderId",
+				"type": "uint256"
+			}
+		],
+		"name": "getRegistrationFee",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_tenderId",
+				"type": "uint256"
+			}
+		],
+		"name": "getRegistrationFeesCollected",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_tenderId",
+				"type": "uint256"
+			}
+		],
+		"name": "getRemainingPhases",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_tenderId",
+				"type": "uint256"
+			}
+		],
 		"name": "getTenderDetails",
 		"outputs": [
 			{
@@ -616,6 +777,26 @@ export const ABI = [
 						"internalType": "uint256[]",
 						"name": "transactionIds",
 						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "dispersedAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "phasesCompleted",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "fundsDeposited",
+						"type": "bool"
 					}
 				],
 				"internalType": "struct BlockchainTendering.Tender",
@@ -702,6 +883,26 @@ export const ABI = [
 						"internalType": "uint256[]",
 						"name": "transactionIds",
 						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "dispersedAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "phasesCompleted",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "fundsDeposited",
+						"type": "bool"
 					}
 				],
 				"internalType": "struct BlockchainTendering.Tender[]",
@@ -761,6 +962,100 @@ export const ABI = [
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "tenderId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "bidder",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "status",
+						"type": "string"
+					}
+				],
+				"internalType": "struct BlockchainTendering.TransactionInput",
+				"name": "input",
+				"type": "tuple"
+			}
+		],
+		"name": "logTransactionPublic",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_tenderId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_detailsFile",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_amount",
+				"type": "uint256"
+			}
+		],
+		"name": "placeBid",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_bidId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "enum BlockchainTendering.BidStatus",
+				"name": "_status",
+				"type": "uint8"
+			}
+		],
+		"name": "setBidStatus",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_tenderId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_winner",
+				"type": "address"
+			}
+		],
+		"name": "setWinner",
+		"outputs": [],
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
@@ -840,6 +1135,26 @@ export const ABI = [
 				"internalType": "address",
 				"name": "winner",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "dispersedAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "phasesCompleted",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "fundsDeposited",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -925,7 +1240,29 @@ export const ABI = [
 		],
 		"stateMutability": "view",
 		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_tenderId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_newStatus",
+				"type": "uint256"
+			}
+		],
+		"name": "updateStatus",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
 	}
 ];
 
-export const ADDRESS = "0x2432326D81Ed8b4dC5c274120604c3DF08D7a2da";
+export const ADDRESS = "0x4ba401456B4B23571eBD331CD4591a569f21a625";
