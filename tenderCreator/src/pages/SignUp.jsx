@@ -11,8 +11,7 @@ export default function SignUp() {
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'bidder',
-        privateKey: '',
+        role: '',
         organization: '',
         address: ''
     });
@@ -23,30 +22,46 @@ export default function SignUp() {
         let token = localStorage.getItem('userData');
         token = token ? JSON.parse(token).token : null;
         if (token) {
-            navigate('/dashboard', { replace: true });
+            setTimeout(() => {
+                navigate('/dashboard', { replace: true });
+            }, 2000); // Redirect after 2 seconds
         }
     }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        if (name === 'privateKey') {
+        if (name === 'address') {
             try {
                 const web3 = new Web3();
-                const address = web3.eth.accounts.privateKeyToAccount(value).address;
-                setData((prevData) => ({
-                    ...prevData,
-                    privateKey: value,
-                    address
-                }));
-                setError('');
+                // Check if the entered value is a valid Ethereum address
+                if (web3.utils.isAddress(value)) {
+                    setData((prevData) => ({
+                        ...prevData,
+                        address: value
+                    }));
+                    setError('');
+                } else if (value === '') {
+                    // Allow empty value (user is clearing the field)
+                    setData((prevData) => ({
+                        ...prevData,
+                        address: value
+                    }));
+                    setError('');
+                } else {
+                    // Invalid address format
+                    setData((prevData) => ({
+                        ...prevData,
+                        address: value
+                    }));
+                    setError('Invalid wallet address format');
+                }
             } catch (error) {
                 setData((prevData) => ({
                     ...prevData,
-                    privateKey: value,
-                    address: ''
+                    address: value
                 }));
-                setError('Invalid private key');
+                setError('Invalid wallet address format');
             }
         } else {
             setData((prevData) => {
@@ -67,8 +82,6 @@ export default function SignUp() {
         }
     };
 
-
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -88,7 +101,11 @@ export default function SignUp() {
             console.log('URL:', url);
             const res = await axios.post(url, payload);
             localStorage.setItem('userData', JSON.stringify(res.data));
-            navigate('/dashboard');
+            
+            // Force a re-render by using window.location instead of navigate
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 100); // Much shorter delay
         } catch (err) {
             console.error(err.response.data.error);
             setError(err.response?.data?.error || 'An error occurred');
@@ -146,23 +163,18 @@ export default function SignUp() {
                                 value={data.role}
                                 onChange={handleChange}
                                 className="form-select"
+                                required
                             >
+                                <option value="" disabled>Select a role</option>
                                 <option value="bidder">Bidder</option>
                                 <option value="Tender Creator">Tender Creator</option>
                             </select>
                             <Input
-                                name="privateKey"
-                                value={data.privateKey}
+                                name="address"
+                                value={data.address}
                                 onChange={handleChange}
-                                placeholder="Wallet Private Key"
+                                placeholder="Wallet Address"
                             />
-
-
-                            {data.privateKey && error === '' && data.address && (
-                                <div className="alert-box success">
-                                    Address: {data.address}
-                                </div>
-                            )}
                         </>
                     ) : (
                         <select
@@ -170,7 +182,9 @@ export default function SignUp() {
                             value={data.role}
                             onChange={handleChange}
                             className="form-select"
+                            required
                         >
+                            <option value="" disabled>Select a role</option>
                             <option value="bidder">Bidder</option>
                             <option value="Tender Creator">Tender Creator</option>
                         </select>
@@ -199,8 +213,7 @@ export default function SignUp() {
                                 email: '',
                                 password: '',
                                 confirmPassword: '',
-                                role: 'bidder',
-                                privateKey: '',
+                                role: '',
                                 organization: '',
                                 address: ''
                             });

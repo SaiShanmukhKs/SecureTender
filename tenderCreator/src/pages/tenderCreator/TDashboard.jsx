@@ -76,7 +76,9 @@ const TDashboard = () => {
         };
 
         if (blockchain.account && address) {
-            fetchTenders();
+            setTimeout(() => {
+                fetchTenders();
+            },1000)
         }
     }, [blockchain, blockchain.account, address]);
 
