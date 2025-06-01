@@ -4,6 +4,7 @@ import { useBlockchainTendering } from '../../context/ContractContext';
 import StatusBadge from '../../components/StatusBadge';
 import BidStatusBadge from '../../components/BidStatusBadge';
 import useParams from '../../hooks/useParams';
+import './BTenderDetails.css'; // Assuming you have a CSS file for styling
 
 const BTenderDetail = () => {
     const [tender, setTender] = useState(null);

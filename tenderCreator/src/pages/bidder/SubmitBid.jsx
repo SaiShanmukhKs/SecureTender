@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useBlockchainTendering } from '../../context/ContractContext';
-
+import './BidSubmit.css'; // Assuming you have a CSS file for styling
 function SubmitBid() {
     // const { submitBid, getTenderById, isLoading, error } = useContext(BidderContext);
     const { id } = useParams();

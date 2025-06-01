@@ -78,7 +78,7 @@ const TTenderDetail = () => {
     if (error) return <div className="no-results">{error}</div>;
     if (!tender) return <div className="no-results">Tender not found</div>;
 
-    const sortedBidders = bids.sort((a, b) => a.amount - b.amount);
+    const sortedBidders = bids.sort((a, b) => Number(a.amount) - Number(b.amount));
 
     const handleAward = (bidderAddress) => {
         blockchain.awardTender(tenderId, bidderAddress);
